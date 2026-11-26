@@ -812,6 +812,7 @@ var runCounted = false;
 var lampState = -1;
 var autoTargets = null;
 var fpsAcc = 0, fpsCount = 0, fpsAvg = 0;
+var costAcc = 0, costCount = 0, jsMs = 0;
 var errCount = 0, errLog = [];
 
 /* =====================================================================
@@ -1989,6 +1990,7 @@ function draw(){
 }
 
 function frame(now){
+  var t0 = (window.performance && performance.now) ? performance.now() : 0;
   var dt = (now - lastFrame)/1000;
   lastFrame = now;
   if (!isFinite(dt) || dt <= 0) dt = 0.016;
@@ -2058,6 +2060,12 @@ function frame(now){
   }
 
   draw();
+
+  if (t0){
+    costAcc += performance.now() - t0; costCount++;
+    if (costCount >= 30){ jsMs = costAcc/costCount; costAcc = 0; costCount = 0; }
+  }
+
   requestAnimationFrame(frame);
 }
 
@@ -2155,7 +2163,7 @@ window.LB99 = {
     return { phase:phase, round:round, E:Math.round(E*10)/10, ES:Math.round(ES*10)/10,
       total:totalScore, precs:roundPrecs.slice(), labels:roundLabels.slice(), busts:busts,
       maxPrec:maxPrec, beamRank: beam?beam.rank:lastBeam, beamT: beam?Math.round(beam.t*100)/100:null,
-      fps: Math.round(fpsAvg), errors: errCount, errLog: errLog.slice(),
+      fps: Math.round(fpsAvg), jsMs: Math.round(jsMs*100)/100, errors: errCount, errLog: errLog.slice(),
       particles: parts.length, processed: true };
   },
   auto: function(targets){
