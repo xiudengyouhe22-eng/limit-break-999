@@ -383,8 +383,8 @@ function startRound(){
     phase = "wait";
     waitStart = performance.now();
     hint.textContent = "合図を待て…";
-    // 合図までは 1.8〜3.6秒（強敵ほど少し早いが、最低1.6秒は待つ）
-    signalDelay = Math.max(1600, (1800 + Math.random()*1800) / enemy.speed);
+    // 合図までは 1.8〜3.6秒（強敵ほど少し早いが、最低1.8秒は待つ）
+    signalDelay = Math.max(1800, (1800 + Math.random()*1800) / enemy.speed);
     feintAt = 400 + Math.random()*Math.max(300, signalDelay*0.55);
   }, 1400);
 }
