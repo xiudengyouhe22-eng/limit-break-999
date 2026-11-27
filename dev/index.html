@@ -1867,9 +1867,9 @@ function bombBlast(b){
   b.boomed = true;
   var ix = b.x, iy = b.y, T = BLK.tower, s = T ? T.s : 20;
   shatter(b, 2.2, 0, -1);
-  for (var i=0;i<4;i++){
-    shocks.push({ x:ix, y:iy, r:6, sp:900 - i*120, w:22 - i*4,
-                  life:0.62 + i*0.1, max:0.62 + i*0.1, hue:(i*80 + tGlobal*200) % 360 });
+  for (var i=0;i<2;i++){
+    shocks.push({ x:ix, y:iy, r:6, sp:820 - i*160, w:15 - i*5,
+                  life:0.55 + i*0.12, max:0.55 + i*0.12, hue:(i*80 + tGlobal*200) % 360 });
   }
   rainbowBurst(ix, iy, 40, 640);
   for (i=0;i<10;i++){
@@ -2791,7 +2791,7 @@ function draw(){
   }
 
   if (phase === "beam"){
-    drawTower(tGlobal, beam ? beam.t : 0);
+    drawTower(beam ? beam.t : 0, beam ? beam.rank : 0);
     drawBeam();
     drawChunks();
     drawBlockCounter(beam ? beam.t : 0);
