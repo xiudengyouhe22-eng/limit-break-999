@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>脳汁スポスポ爆破｜25秒で抜きまくれ</title>
+<meta name="description" content="画面いっぱいのネオンクリスタルをタップ＆スワイプで「スポッ！」と抜きまくる25秒。コンボ倍率と保留ランプが溜まり、虹玉を引くとキュイン♪確定で全画面大爆発。">
+<meta name="theme-color" content="#06010f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="スポスポ爆破">
+<style>
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{
+    margin:0;padding:0;height:100%;width:100%;
+    background:#06010f;color:#eaf6ff;overflow:hidden;overscroll-behavior:none;
+    font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans JP",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:none;
+  }
+  #stage{position:fixed;inset:0;overflow:hidden;touch-action:none;
+    -webkit-touch-callout:none;-webkit-user-select:none;user-select:none;-webkit-user-drag:none;}
+  #fx{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;-webkit-touch-callout:none;}
+
+  /* HUD */
+  #hud{position:absolute;left:0;right:0;top:0;z-index:6;display:flex;align-items:flex-start;justify-content:space-between;
+    gap:8px;padding:calc(10px + env(safe-area-inset-top)) 14px 0 14px;pointer-events:none;transition:opacity .25s ease;}
+  #hud.off{opacity:0;}
+  .hud-item{display:flex;flex-direction:column;gap:2px;min-width:84px;}
+  .hud-item.mid{align-items:center;min-width:70px;}
+  .hud-item.right{align-items:flex-end;}
+  .lbl{font-size:9px;letter-spacing:.24em;color:#6f7fa8;font-weight:700;}
+  .hud-val{font-size:18px;font-weight:900;font-variant-numeric:tabular-nums;letter-spacing:.02em;
+    text-shadow:0 0 14px rgba(0,229,255,.5);}
+  #hudTime{font-size:30px;line-height:1;color:#ffe600;text-shadow:0 0 18px rgba(255,230,0,.6);}
+  #hudTime.warn{color:#ff3d6e;text-shadow:0 0 20px rgba(255,61,110,.8);animation:timePop .5s ease-in-out infinite;}
+  @keyframes timePop{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
+  #comboWrap{display:flex;flex-direction:column;align-items:flex-start;margin-top:4px;}
+  #comboTxt{font-size:13px;font-weight:900;color:#00e5ff;opacity:0;transition:opacity .15s;}
+  #comboTxt.on{opacity:1;}
+  #multTxt{font-size:10px;color:#ff8af5;font-weight:800;letter-spacing:.08em;}
+  #lamps{display:flex;gap:5px;margin-top:6px;}
+  .lamp{width:12px;height:16px;border-radius:3px;background:rgba(255,255,255,.10);
+    border:1px solid rgba(255,255,255,.16);transition:all .12s;}
+  .lamp.lit{background:#ff2fd0;box-shadow:0 0 12px #ff2fd0,0 0 24px rgba(255,47,208,.7);border-color:#ffb8f4;}
+  .lamp.rain{background:linear-gradient(180deg,#ffe600,#ff2fd0,#00e5ff);box-shadow:0 0 14px #fff;
+    animation:lampRain .35s linear infinite;}
+  @keyframes lampRain{0%{filter:hue-rotate(0)}100%{filter:hue-rotate(360deg)}}
+  #muteBtn{pointer-events:auto;width:38px;height:38px;border-radius:12px;cursor:pointer;
+    background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.16);color:#9fd8ff;font-size:15px;
+    display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px);}
+  #muteBtn:active{transform:scale(.92);}
+
+  /* screens */
+  .screen{position:absolute;inset:0;z-index:5;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:14px;padding:calc(64px + env(safe-area-inset-top)) 22px calc(24px + env(safe-area-inset-bottom));
+    opacity:0;pointer-events:none;transition:opacity .22s ease;background:radial-gradient(ellipse at 50% 42%,rgba(60,0,110,.55) 0%,rgba(6,1,15,.92) 62%,#06010f 100%);}
+  .screen.show{opacity:1;pointer-events:auto;}
+  .logo{text-align:center;line-height:1;margin-bottom:8px;}
+  .logo .l1{display:block;font-size:clamp(26px,9vw,44px);font-weight:900;letter-spacing:.02em;
+    background:linear-gradient(180deg,#fff 0%,#9be9ff 48%,#0a9cff 100%);-webkit-background-clip:text;background-clip:text;color:transparent;
+    filter:drop-shadow(0 0 18px rgba(0,200,255,.55));}
+  .logo .l2{display:block;margin-top:6px;font-size:clamp(40px,14.5vw,72px);font-weight:900;letter-spacing:-.02em;
+    background:linear-gradient(90deg,#ffe600,#ff2fd0 40%,#00e5ff 75%,#7b2bff);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    filter:drop-shadow(0 0 26px rgba(255,47,208,.55));animation:pulseGlow 2.1s ease-in-out infinite;}
+  @keyframes pulseGlow{0%,100%{filter:drop-shadow(0 0 16px rgba(255,47,208,.45))}50%{filter:drop-shadow(0 0 38px rgba(255,47,208,.9))}}
+  .logo .sub{display:block;margin-top:12px;font-size:11px;letter-spacing:.4em;color:#8fd6ff;font-weight:700;text-indent:.4em;}
+  .rules{font-size:12px;line-height:1.85;color:#a9c3e0;text-align:center;background:rgba(255,255,255,.035);
+    border:1px solid rgba(255,255,255,.09);border-radius:14px;padding:12px 16px;max-width:330px;}
+  .rules b{color:#ffe600;}
+  .rules .rain{color:#ff8af5;}
+  .btn{appearance:none;border:none;cursor:pointer;font-family:inherit;font-weight:900;
+    border-radius:16px;padding:16px 46px;font-size:17px;letter-spacing:.06em;
+    background:linear-gradient(135deg,#ff2fd0,#7b2bff 55%,#00a6ff);color:#fff;
+    box-shadow:0 10px 34px rgba(255,47,208,.4),inset 0 1px 0 rgba(255,255,255,.35);
+    transition:transform .08s;}
+  .btn:active{transform:scale(.95);}
+  .btn.ghost{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.18);
+    box-shadow:none;color:#cfe6ff;font-size:14px;padding:13px 30px;}
+  .btn.share{background:linear-gradient(135deg,#101820,#000);border:1px solid rgba(255,255,255,.35);
+    box-shadow:0 8px 26px rgba(0,0,0,.5);font-size:15px;padding:14px 30px;}
+
+  /* result */
+  #scrResult .rTitle{font-size:11px;letter-spacing:.38em;color:#8fd6ff;font-weight:800;text-indent:.38em;}
+  #rScore{font-size:clamp(52px,17vw,80px);font-weight:900;letter-spacing:-.03em;font-variant-numeric:tabular-nums;
+    line-height:1;background:linear-gradient(180deg,#fff,#ffe600 60%,#ff9d00);-webkit-background-clip:text;background-clip:text;color:transparent;
+    filter:drop-shadow(0 0 26px rgba(255,200,0,.55));}
+  #rRank{font-size:20px;font-weight:900;color:#ff8af5;text-shadow:0 0 18px rgba(255,47,208,.6);text-align:center;}
+  #rStats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:100%;max-width:330px;margin:4px 0 2px;}
+  .stat{background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:8px 4px;text-align:center;}
+  .stat .k{font-size:9px;color:#7f95b8;letter-spacing:.12em;font-weight:700;}
+  .stat .v{font-size:17px;font-weight:900;font-variant-numeric:tabular-nums;color:#eaf6ff;margin-top:2px;}
+  #rComment{font-size:12px;color:#a9c3e0;text-align:center;max-width:320px;line-height:1.7;min-height:34px;}
+
+  #floatLayer{position:absolute;inset:0;pointer-events:none;z-index:4;}
+  #hint{position:absolute;left:0;right:0;bottom:calc(16px + env(safe-area-inset-bottom));text-align:center;
+    font-size:11px;letter-spacing:.14em;color:#7f95b8;z-index:4;pointer-events:none;opacity:0;transition:opacity .5s;}
+  #flash{position:absolute;inset:0;pointer-events:none;background:#fff;opacity:0;z-index:7;}
+  #flash.on{animation:flashOut .45s ease-out forwards;}
+  #flash.rain.on{animation:rainFlash .7s ease-out forwards;background:linear-gradient(120deg,#ff004c,#ffe600,#00ff9d,#00a6ff,#c400ff);}
+  @keyframes flashOut{0%{opacity:.9}100%{opacity:0}}
+  @keyframes rainFlash{0%{opacity:.92}25%{opacity:.2}45%{opacity:.75}100%{opacity:0}}
+  #kiunTxt{position:absolute;left:0;right:0;top:38%;text-align:center;z-index:8;pointer-events:none;
+    font-size:clamp(34px,11vw,58px);font-weight:900;letter-spacing:.04em;opacity:0;
+    background:linear-gradient(90deg,#ffe600,#fff,#ff8af5,#00e5ff);-webkit-background-clip:text;background-clip:text;color:transparent;
+    filter:drop-shadow(0 2px 2px rgba(20,0,30,.9)) drop-shadow(0 0 22px rgba(255,255,255,.85));}
+  #kiunTxt.on{animation:kiunPop 1.5s cubic-bezier(.2,1.6,.4,1) forwards;}
+  @keyframes kiunPop{0%{opacity:0;transform:scale(.4) rotate(-6deg)}18%{opacity:1;transform:scale(1.18) rotate(2deg)}
+    38%{transform:scale(1) rotate(0)}78%{opacity:1}100%{opacity:0;transform:scale(1.05)}}
+  #feverBar{position:absolute;left:0;right:0;top:calc(96px + env(safe-area-inset-top));height:3px;z-index:6;
+    background:linear-gradient(90deg,#ffe600,#ff2fd0,#00e5ff);opacity:0;transition:opacity .2s;box-shadow:0 0 16px #fff;}
+  #feverBar.on{opacity:1;}
+  .pop2{animation:popIn .35s cubic-bezier(.2,1.6,.4,1);}
+  @keyframes popIn{0%{transform:scale(.7);opacity:0}100%{transform:scale(1);opacity:1}}
+</style>
+</head>
+<body>
+<div id="stage">
+  <canvas id="fx"></canvas>
+  <div id="feverBar"></div>
+
+  <div id="hud" class="off">
+    <div class="hud-item">
+      <div class="lbl">SCORE</div>
+      <div class="hud-val" id="hudScore">0</div>
+      <div id="comboWrap"><div id="comboTxt">0 COMBO</div><div id="multTxt">×1.0</div></div>
+    </div>
+    <div class="hud-item mid">
+      <div class="lbl">TIME</div>
+      <div class="hud-val" id="hudTime">25.0</div>
+    </div>
+    <div class="hud-item right">
+      <button id="muteBtn" aria-label="サウンド切替">🔊</button>
+      <div id="lamps"><i class="lamp"></i><i class="lamp"></i><i class="lamp"></i><i class="lamp"></i></div>
+      <div class="lbl" style="margin-top:2px">保留</div>
+    </div>
+  </div>
+
+  <div id="hint">タップ＆スワイプで スポスポ抜け</div>
+
+  <div id="scrTitle" class="screen show">
+    <div class="logo">
+      <span class="l1">脳汁</span>
+      <span class="l2">スポスポ爆破</span>
+      <span class="sub">25 SECONDS SPOT BLAST</span>
+    </div>
+    <div class="rules">
+      画面いっぱいの玉を<b>タップ＆スワイプ</b>で<br>
+      「スポッ！」と抜きまくれ。<br>
+      抜くほど<b>コンボ倍率</b>アップ。<br>
+      保留ランプが満タンになると<span class="rain">虹玉</span>出現。<br>
+      虹玉を抜けば <b>キュイン♪ 確定!!</b> 全画面大爆発。
+    </div>
+    <button class="btn" id="startBtn">スポスポ開始</button>
+      <a class="pkl-arcade-link" href="../arcade/" style="display:inline-block;margin-top:12px;padding:7px 14px;border-radius:99px;border:1px solid rgba(140,210,255,.38);background:rgba(8,16,32,.55);color:#9fd8ff;font-size:11px;font-weight:700;letter-spacing:.04em;text-decoration:none;opacity:.8;pointer-events:auto;line-height:1.3;-webkit-tap-highlight-color:transparent;">🎮 他の脳汁ゲームも遊ぶ（全11本）</a>
+  </div>
+
+  <div id="scrResult" class="screen">
+    <div class="rTitle">RESULT</div>
+    <div id="rScore">0</div>
+    <div id="rRank">—</div>
+    <div id="rStats">
+      <div class="stat"><div class="k">MAX COMBO</div><div class="v" id="rCombo">0</div></div>
+      <div class="stat"><div class="k">抜いた数</div><div class="v" id="rPops">0</div></div>
+      <div class="stat"><div class="k">虹玉 確定</div><div class="v" id="rFever">0</div></div>
+    </div>
+    <div id="rComment"></div>
+    <button class="btn share" id="shareBtn">𝕏 で結果をシェア</button>
+    <button class="btn ghost" id="retryBtn">もう一回スポスポ</button>
+      <a class="pkl-arcade-link" href="../arcade/" style="display:inline-block;margin-top:12px;padding:7px 14px;border-radius:99px;border:1px solid rgba(140,210,255,.38);background:rgba(8,16,32,.55);color:#9fd8ff;font-size:11px;font-weight:700;letter-spacing:.04em;text-decoration:none;opacity:.8;pointer-events:auto;line-height:1.3;-webkit-tap-highlight-color:transparent;">🎮 他の脳汁ゲームも遊ぶ（全11本）</a>
+  </div>
+
+  <div id="kiunTxt">キュイン♪ 確定!!</div>
+  <div id="flash"></div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ====================== CONFIG ====================== */
+var GAME_SECONDS = 25;
+var STORE_KEY = "spospo-blast-v1";
+var HASHTAG = "脳汁ゲー";
+
+/* ====================== CANVAS ====================== */
+var stage = document.getElementById("stage");
+var cv = document.getElementById("fx");
+var ctx = cv.getContext("2d");
+var W = 0, H = 0, DPR = 1;
+var SAFE_TOP = 0;
+
+function resize(){
+  W = window.innerWidth;
+  H = window.innerHeight;
+  DPR = Math.min(window.devicePixelRatio || 1, 3);
+  cv.width = Math.round(W * DPR);
+  cv.height = Math.round(H * DPR);
+  cv.style.width = W + "px";
+  cv.style.height = H + "px";
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  bgCanvas = null;
+  layout();
+}
+window.addEventListener("resize", resize, {passive:true});
+window.addEventListener("orientationchange", function(){ setTimeout(function(){ resize(); layout(); }, 260); });
+
+/* ====================== AUDIO ====================== */
+var actx = null, master = null, noiseBuf = null;
+var muted = false;
+try { muted = localStorage.getItem(STORE_KEY + "-muted") === "1"; } catch(e){}
+function saveMuted(){ try{ localStorage.setItem(STORE_KEY + "-muted", muted ? "1":"0"); }catch(e){} }
+
+function ensureAudio(){
+  if (!actx){
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return null;
+    try { actx = new AC(); } catch(e){ return null; }
+    master = actx.createGain();
+    master.gain.value = muted ? 0 : 0.85;
+    master.connect(actx.destination);
+  }
+  if (actx.state === "suspended") { try{ actx.resume(); }catch(e){} }
+  return actx;
+}
+function noise(){
+  if (!noiseBuf && actx){
+    var len = Math.floor(actx.sampleRate * 1.0);
+    noiseBuf = actx.createBuffer(1, len, actx.sampleRate);
+    var d = noiseBuf.getChannelData(0);
+    for (var i=0;i<len;i++) d[i] = Math.random()*2-1;
+  }
+  return noiseBuf;
+}
+function tone(o){
+  if (!actx || muted) return;
+  var t0 = actx.currentTime + (o.at||0);
+  var dur = o.dur || 0.2;
+  var osc = actx.createOscillator();
+  osc.type = o.type || "sine";
+  osc.frequency.setValueAtTime(Math.max(1,o.f0), t0);
+  if (o.f1) osc.frequency.exponentialRampToValueAtTime(Math.max(1,o.f1), t0+dur);
+  var node = osc;
+  if (o.filter){
+    var f = actx.createBiquadFilter();
+    f.type = o.filter; f.frequency.value = o.freq||1600; f.Q.value = o.q||1;
+    osc.connect(f); node = f;
+  }
+  var g = actx.createGain();
+  var peak = (o.gain==null?0.2:o.gain);
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.exponentialRampToValueAtTime(Math.max(0.0002,peak), t0+(o.attack||0.01));
+  g.gain.exponentialRampToValueAtTime(0.0001, t0+dur);
+  node.connect(g); g.connect(master);
+  osc.start(t0); osc.stop(t0+dur+0.04);
+}
+function noiseBurst(dur, freq, gain, ftype, sweepTo, at){
+  if (!actx || muted) return;
+  var t0 = actx.currentTime + (at||0);
+  var src = actx.createBufferSource(); src.buffer = noise(); src.loop = true;
+  var f = actx.createBiquadFilter(); f.type = ftype||"lowpass";
+  f.frequency.setValueAtTime(freq, t0);
+  if (sweepTo) f.frequency.exponentialRampToValueAtTime(Math.max(40,sweepTo), t0+dur);
+  f.Q.value = 0.9;
+  var g = actx.createGain();
+  g.gain.setValueAtTime(Math.max(0.0002,gain), t0);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0+dur);
+  src.connect(f); f.connect(g); g.connect(master);
+  src.start(t0); src.stop(t0+dur+0.04);
+}
+function vibrate(p){ if (navigator.vibrate){ try{ navigator.vibrate(p); }catch(e){} } }
+
+function sfxPop(combo){
+  var step = Math.min(combo, 24);
+  var base = 520 * Math.pow(1.0595, step*1.2);
+  tone({type:"sine", f0:base*1.5, f1:base*0.55, dur:0.085, gain:0.20, attack:0.003});
+  tone({type:"triangle", f0:base*2.3, f1:base*1.1, dur:0.05, gain:0.09, attack:0.002});
+  noiseBurst(0.045, 4200, 0.06, "highpass", 2400);
+}
+function sfxComboMilestone(n){
+  var notes = [0,4,7,12,16,19,24];
+  for (var i=0;i<4;i++){
+    tone({type:"square", f0:440*Math.pow(2,(notes[(n+i)%notes.length])/12), dur:0.10, gain:0.075, at:i*0.045, attack:0.004});
+  }
+  tone({type:"sine", f0:1800, f1:3000, dur:0.22, gain:0.10, at:0.02});
+}
+function sfxKiun(){
+  // パチンコ風「キュイン♪」
+  if (!actx || muted) return;
+  var seq = [1046, 1318, 1568, 2093, 2637, 3136];
+  for (var i=0;i<seq.length;i++){
+    tone({type:"square", f0:seq[i], f1:seq[i]*1.02, dur:0.10, gain:0.10, at:i*0.065, attack:0.003});
+    tone({type:"sine", f0:seq[i]*2, dur:0.09, gain:0.05, at:i*0.065});
+  }
+  tone({type:"sine", f0:2093, f1:4186, dur:0.5, gain:0.11, at:0.42});
+  noiseBurst(0.7, 9000, 0.10, "highpass", 5000, 0.40);
+}
+function sfxBoom(){
+  if (!actx || muted) return;
+  tone({type:"sine", f0:150, f1:34, dur:0.85, gain:0.5, attack:0.005});
+  noiseBurst(0.9, 2400, 0.35, "lowpass", 120, 0);
+  noiseBurst(0.5, 8000, 0.13, "highpass", 1200, 0);
+}
+function sfxFeverFanfare(){
+  var notes = [523,659,784,1046,1318,1568,2093];
+  for (var i=0;i<notes.length;i++){
+    tone({type:"sawtooth", f0:notes[i], dur:0.22, gain:0.07, at:i*0.07, filter:"lowpass", freq:2600});
+    tone({type:"square", f0:notes[i]*2, dur:0.18, gain:0.035, at:i*0.07});
+  }
+}
+function sfxEnd(){
+  [880,740,620,494].forEach(function(f,i){
+    tone({type:"triangle", f0:f, f1:f*0.98, dur:0.24, gain:0.16, at:i*0.14});
+  });
+}
+function sfxUIClick(){ ensureAudio(); tone({type:"square", f0:880, f1:1320, dur:0.06, gain:0.07}); }
+
+/* ====================== STATE ====================== */
+var phase = "title";           // title | play | result
+var score = 0, pops = 0, combo = 0, maxCombo = 0, comboT = 0;
+var timeLeft = GAME_SECONDS, feverCount = 0, gameEndAt = 0;
+var feverT = 0, feverTick = 0, rainbow = null;
+var orbs = [], parts = [], rings = [], texts = [], debris = [];
+var lampCharge = 0;
+var shake = 0, flashT = 0, bgT = 0;
+var lastFrame = 0, acc = 0;
+var swiping = false, lastSwipe = null;
+
+var elScore = document.getElementById("hudScore");
+var elTime = document.getElementById("hudTime");
+var elCombo = document.getElementById("comboTxt");
+var elMult = document.getElementById("multTxt");
+var hud = document.getElementById("hud");
+var lamps = document.querySelectorAll("#lamps .lamp");
+var hint = document.getElementById("hint");
+var feverBar = document.getElementById("feverBar");
+var kiunTxt = document.getElementById("kiunTxt");
+var flash = document.getElementById("flash");
+
+function fmt(n){ return String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ","); }
+
+/* ====================== FIELD ====================== */
+var COLS = 0, ROWS = 0, CELL = 54, OX = 0, OY = 0;
+
+function layout(){
+  if (!W || !H) return;
+  var top = 108, bottom = 66;
+  var availW = W - 20;
+  COLS = Math.min(8, Math.max(5, Math.floor(availW / 52)));
+  CELL = availW / COLS;
+  ROWS = Math.max(6, Math.floor((H - top - bottom) / CELL));
+  OX = 10 + CELL/2;
+  OY = top + CELL/2;
+}
+
+function cellPos(c, r){
+  var jx = (Math.random()-0.5) * (CELL*0.12);
+  var jy = (Math.random()-0.5) * (CELL*0.12);
+  return { x: OX + c*CELL + jx, y: OY + r*CELL + jy };
+}
+var HUES = [188, 280, 320, 48, 160, 210];
+
+function makeOrb(c, r, delay){
+  var p = cellPos(c, r);
+  var hue = HUES[(Math.random()*HUES.length)|0];
+  var type = Math.random() < 0.34 ? 1 : (Math.random() < 0.5 ? 2 : 0);
+  return {
+    c:c, r:r, x:p.x, y:p.y,
+    baseX:p.x, baseY:p.y,
+    rad: CELL*0.33 + Math.random()*CELL*0.09,
+    hue: hue, type: type,
+    alive: true, respawnAt: 0, born: delay||0, popT: -1,
+    phase: Math.random()*Math.PI*2, rot: Math.random()*Math.PI*2,
+    special: false, life: 0
+  };
+}
+function fillField(){
+  orbs = [];
+  for (var r=0;r<ROWS;r++) for (var c=0;c<COLS;c++){
+    if (Math.random() < 0.06) continue;
+    orbs.push(makeOrb(c, r, Math.random()*0.25));
+  }
+}
+function aliveCount(){ var n=0; for (var i=0;i<orbs.length;i++) if (orbs[i].alive) n++; return n; }
+
+function spawnRainbow(){
+  if (rainbow) return;
+  var live = [];
+  for (var i=0;i<orbs.length;i++) if (orbs[i].alive) live.push(orbs[i]);
+  if (!live.length) return;
+  // 指から少し離れた玉を虹玉に変える
+  var pick = null;
+  for (var tries=0; tries<12; tries++){
+    var cand = live[(Math.random()*live.length)|0];
+    if (!lastSwipe || Math.hypot(cand.x-lastSwipe.x, cand.y-lastSwipe.y) > 90){ pick = cand; break; }
+  }
+  if (!pick) pick = live[(Math.random()*live.length)|0];
+  pick.special = true; pick.hue = 0; pick.rad = CELL*0.46; pick.born = 0.35;
+  rainbow = pick;
+  // 出現演出
+  rings.push({x:pick.baseX, y:pick.baseY, r:6, max:74, hue:0, rainbow:true, life:0, dur:0.6});
+  tone({type:"sine", f0:880, f1:1760, dur:0.3, gain:0.12});
+  tone({type:"sine", f0:1320, f1:2640, dur:0.35, gain:0.08, at:0.12});
+  for (var k=0;k<lamps.length;k++) lamps[k].className = "lamp rain";
+  hint.textContent = "虹玉キター！抜けば確定!!";
+  hint.style.opacity = 1;
+}
+
+/* ====================== SCORE / COMBO ====================== */
+function comboMult(){
+  var step = Math.floor(combo/5);
+  return Math.min(1 + step*0.25, 4);
+}
+function addScore(n){
+  score += n;
+  elScore.textContent = fmt(score);
+  elScore.classList.remove("pop2");
+  void elScore.offsetWidth;
+  elScore.classList.add("pop2");
+}
+function bumpCombo(){
+  combo++; comboT = 1.35;
+  if (combo > maxCombo) maxCombo = combo;
+  elCombo.textContent = combo + " COMBO";
+  elCombo.classList.add("on");
+  elMult.textContent = "×" + comboMult().toFixed(1);
+  if (combo % 10 === 0){ sfxComboMilestone(combo); vibrate([0,18,26,18]); }
+}
+
+/* ====================== POP ====================== */
+function popOrb(o, chain){
+  if (!o || !o.alive) return;
+  o.alive = false;
+  o.popT = 0;
+  o.respawnAt = performance.now() + (feverT > 0 ? 1200 : 1500 + Math.random()*900);
+  if (o.special) { rainbow = null; triggerFever(o); return; }
+
+  pops++;
+  bumpCombo();
+  var mult = comboMult();
+  var gain = Math.round(100 * mult * (feverT>0 ? 1.6 : 1));
+  addScore(gain);
+  if (feverT <= 0) lampCharge = Math.min(100, lampCharge + 5);
+  updateLamps();
+
+  var hue = o.hue;
+  // 破片
+  for (var i=0;i<9;i++){
+    var a = Math.random()*Math.PI*2, sp = 60 + Math.random()*220;
+    parts.push({x:o.x, y:o.y, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp - 40,
+      life:0.5+Math.random()*0.4, t:0, size:2+Math.random()*3.4, hue:hue, g:520});
+  }
+  rings.push({x:o.x, y:o.y, r:o.rad*0.5, max:o.rad*2.6, hue:hue, life:0, dur:0.38});
+  texts.push({x:o.x, y:o.y - o.rad*0.4, vy:-80, life:0.7, t:0,
+    txt:"+"+gain, hue: feverT>0?48:hue, size: 13 + Math.min(combo,20)*0.45});
+  sfxPop(combo);
+  shake = Math.min(shake + (chain?0.5:1.4), 7);
+  if (combo>0 && combo%5===0) vibrate([0,10]);
+
+  // コンボが多いほど花火
+  if (combo % 25 === 0){
+    for (var k=0;k<24;k++){
+      var a2 = Math.random()*Math.PI*2, sp2 = 120+Math.random()*320;
+      parts.push({x:o.x, y:o.y, vx:Math.cos(a2)*sp2, vy:Math.sin(a2)*sp2,
+        life:0.7+Math.random()*0.5, t:0, size:2+Math.random()*4, hue:(hue+Math.random()*120)|0, g:240});
+    }
+    rings.push({x:o.x, y:o.y, r:4, max:120, hue:48, life:0, dur:0.55, rainbow:true});
+  }
+  if (lampCharge >= 100 && !rainbow) spawnRainbow();
+}
+
+function updateLamps(){
+  var lit = Math.ceil(lampCharge/25);
+  for (var i=0;i<lamps.length;i++){
+    if (lamps[i].classList.contains("rain")) continue;
+    lamps[i].className = "lamp" + (i<lit ? " lit":"");
+  }
+}
+
+/* ====================== FEVER ====================== */
+function triggerFever(o){
+  feverCount++;
+  feverT = 3.6; feverTick = 0;
+  lampCharge = 0;
+  for (var i=0;i<lamps.length;i++) lamps[i].className = "lamp";
+  kiunTxt.classList.remove("on"); void kiunTxt.offsetWidth; kiunTxt.classList.add("on");
+  flash.classList.remove("on"); void flash.offsetWidth; flash.classList.add("rain","on");
+  document.getElementById("feverBar").classList.add("on");
+  sfxKiun();
+  setTimeout(function(){ sfxBoom(); }, 380);
+  sfxFeverFanfare();
+  vibrate([0,40,40,60,40,120]);
+  shake = 18;
+  addScore(2000 * Math.max(1, Math.round(comboMult())));
+  hint.textContent = "全画面 確定ォォォ!!";
+  hint.style.opacity = 1;
+  // 衝撃波
+  for (var k=0;k<3;k++){
+    rings.push({x:o.baseX, y:o.baseY, r:10, max:Math.max(W,H)*1.1, hue:0, life:-k*0.09, dur:0.75, rainbow:true, thick:8});
+  }
+  // 虹の破片
+  for (var j=0;j<90;j++){
+    var a = Math.random()*Math.PI*2, sp = 120 + Math.random()*760;
+    parts.push({x:o.baseX, y:o.baseY, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp,
+      life:0.8+Math.random()*0.9, t:0, size:2+Math.random()*5, hue:(Math.random()*360)|0, g:180});
+  }
+  for (var d=0; d<26; d++){
+    var a3 = Math.random()*Math.PI*2, sp3 = 200 + Math.random()*520;
+    debris.push({x:o.baseX, y:o.baseY, vx:Math.cos(a3)*sp3, vy:Math.sin(a3)*sp3,
+      size:5+Math.random()*14, rot:Math.random()*6, vr:(Math.random()-0.5)*14,
+      hue:(Math.random()*360)|0, t:0, life:2.2+Math.random()});
+  }
+}
+
+function updateFever(dt){
+  if (feverT <= 0) return;
+  feverT -= dt;
+  feverTick -= dt;
+  if (feverTick <= 0){
+    feverTick = 0.045;
+    // 生きている玉を1〜2個ずつ自動で抜く
+    var live = [];
+    for (var i=0;i<orbs.length;i++) if (orbs[i].alive && !orbs[i].special) live.push(orbs[i]);
+    var n = Math.min(live.length, 1 + ((Math.random()<0.5)?1:0));
+    for (var j=0;j<n;j++){
+      var o = live.splice((Math.random()*live.length)|0,1)[0];
+      if (o) popOrb(o, true);
+    }
+  }
+  if (feverT <= 0){
+    document.getElementById("feverBar").classList.remove("on");
+    hint.textContent = "まだまだ抜け！";
+    // フィーバー中に抜いた玉を一斉復活
+    var now2 = performance.now();
+    for (var r2=0;r2<orbs.length;r2++){
+      var oo = orbs[r2];
+      if (!oo.alive && !oo.special && (!oo.respawnAt || oo.respawnAt > now2 + 700)) oo.respawnAt = now2 + Math.random()*350;
+    }
+  }
+}
+
+/* ====================== INPUT ====================== */
+var src = null; // "pointer" | "touch"
+
+function inStageUI(t){
+  if (!t || !t.closest) return false;
+  return !!t.closest("#hud, .screen, button, .btn");
+}
+function localPoint(ev){
+  var x, y;
+  if (ev.touches && ev.touches.length){ x = ev.touches[0].clientX; y = ev.touches[0].clientY; }
+  else if (ev.changedTouches && ev.changedTouches.length){ x = ev.changedTouches[0].clientX; y = ev.changedTouches[0].clientY; }
+  else { x = ev.clientX; y = ev.clientY; }
+  return {x:x, y:y};
+}
+
+function down(s, ev){
+  if (inStageUI(ev.target)) return false;
+  if (phase !== "play") return false;
+  if (ev.cancelable){ try{ ev.preventDefault(); }catch(e){} }
+  if (src === "touch" && s === "pointer") return false;
+  if (src){ src = s; return true; }   // 同じジェスチャーの二重発火はソース交代のみ
+  src = s;
+  ensureAudio();
+  hint.style.opacity = 0;
+  var p = localPoint(ev);
+  swiping = true; lastSwipe = p;
+  hitAt(p.x, p.y);
+  return true;
+}
+function move(s, ev){
+  if (src !== s || !swiping || phase !== "play") return;
+  if (ev.cancelable){ try{ ev.preventDefault(); }catch(e){} }
+  var p = localPoint(ev);
+  if (lastSwipe) swipeSegment(lastSwipe, p);
+  lastSwipe = p;
+}
+function up(s){
+  if (src !== s) return;
+  src = null; swiping = false; lastSwipe = null;
+}
+stage.addEventListener("pointerdown", function(ev){
+  if (ev.button != null && ev.button > 0) return;
+  down("pointer", ev);
+}, {passive:false});
+stage.addEventListener("pointermove", function(ev){ move("pointer", ev); }, {passive:false});
+window.addEventListener("pointerup", function(){ up("pointer"); }, {passive:true});
+window.addEventListener("pointercancel", function(){ up("pointer"); }, {passive:true});
+
+stage.addEventListener("touchstart", function(ev){
+  if (ev.touches && ev.touches.length > 1) return;
+  down("touch", ev);
+}, {passive:false});
+stage.addEventListener("touchmove", function(ev){ move("touch", ev); }, {passive:false});
+window.addEventListener("touchend", function(ev){
+  if (ev.touches && ev.touches.length > 0) return;
+  up("touch");
+}, {passive:true});
+window.addEventListener("touchcancel", function(){ up("touch"); }, {passive:true});
+window.addEventListener("blur", function(){ up("pointer"); up("touch"); });
+document.addEventListener("visibilitychange", function(){
+  if (document.hidden){ up("pointer"); up("touch"); }
+});
+stage.addEventListener("contextmenu", function(ev){ ev.preventDefault(); });
+
+function hitAt(x, y){
+  var best = null, bestD = 1e9;
+  for (var i=0;i<orbs.length;i++){
+    var o = orbs[i];
+    if (!o.alive) continue;
+    var dx = o.x - x, dy = o.y - y;
+    var d = dx*dx + dy*dy;
+    var rr = (o.rad + 16);
+    if (d < rr*rr && d < bestD){ best = o; bestD = d; }
+  }
+  if (best) popOrb(best, false);
+  else {
+    // 空振りでも小さく波紋
+    rings.push({x:x, y:y, r:2, max:26, hue:200, life:0, dur:0.3});
+  }
+}
+function swipeSegment(a, b){
+  var dx = b.x-a.x, dy = b.y-a.y;
+  var len2 = dx*dx + dy*dy;
+  var steps = Math.max(1, Math.ceil(Math.sqrt(len2) / 14));
+  for (var s=0;s<=steps;s++){
+    var t = s/steps;
+    var px = a.x + dx*t, py = a.y + dy*t;
+    for (var i=0;i<orbs.length;i++){
+      var o = orbs[i];
+      if (!o.alive) continue;
+      var ox = o.x-px, oy = o.y-py;
+      if (ox*ox + oy*oy < (o.rad+12)*(o.rad+12)) popOrb(o, true);
+    }
+  }
+}
+
+/* ====================== GAME FLOW ====================== */
+var scrTitle = document.getElementById("scrTitle");
+var scrResult = document.getElementById("scrResult");
+
+function show(el){ el.classList.add("show"); }
+function hide(el){ el.classList.remove("show"); }
+
+function startGame(){
+  score = 0; pops = 0; combo = 0; maxCombo = 0; comboT = 0;
+  timeLeft = GAME_SECONDS; gameEndAt = performance.now() + GAME_SECONDS*1000; feverT = 0; feverCount = 0; rainbow = null;
+  lampCharge = 0; parts = []; rings = []; texts = []; debris = [];
+  shake = 0; swiping = false; lastSwipe = null; src = null;
+  elScore.textContent = "0"; elCombo.classList.remove("on"); elMult.textContent = "×1.0";
+  elTime.textContent = GAME_SECONDS.toFixed(1); elTime.classList.remove("warn");
+  for (var i=0;i<lamps.length;i++) lamps[i].className = "lamp";
+  document.getElementById("feverBar").classList.remove("on");
+  hide(scrTitle); hide(scrResult);
+  hud.classList.remove("off");
+  hint.textContent = "タップ＆スワイプで スポスポ抜け";
+  hint.style.opacity = 1;
+  fillField();
+  phase = "play";
+  lastFrame = performance.now();
+  ensureAudio();
+}
+
+function endGame(){
+  phase = "result";
+  document.getElementById("feverBar").classList.remove("on");
+  feverT = 0;
+  hud.classList.add("off");
+  hint.style.opacity = 0;
+  var rank, comment;
+  if (score >= 60000){ rank = "スポスポ神"; comment = "もはや指がスポットの化身。画面が浄化されました。"; }
+  else if (score >= 40000){ rank = "脳汁中毒・極"; comment = "抜きすぎ注意。指先から脳汁が漏れています。"; }
+  else if (score >= 25000){ rank = "スポスポ職人"; comment = "コンボの波に乗れている。あと一歩で神。" }
+  else if (score >= 12000){ rank = "脳汁覚醒"; comment = "いいスポスポしてます。虹玉で一気に跳ねろ。" }
+  else if (score >= 5000){ rank = "スポスポ見習い"; comment = "まずはスワイプで一列まとめて抜くのがコツ。" }
+  else { rank = "まだまだ未覚醒"; comment = "連続で抜くと倍率が上がる。指を滑らせろ。" }
+  document.getElementById("rScore").textContent = fmt(score);
+  document.getElementById("rRank").textContent = rank;
+  document.getElementById("rCombo").textContent = maxCombo;
+  document.getElementById("rPops").textContent = pops;
+  document.getElementById("rFever").textContent = feverCount + "回";
+  document.getElementById("rComment").textContent = comment;
+  show(scrResult);
+  sfxEnd(); vibrate([0,60,50,90]);
+}
+
+function gameUrl(){
+  if (/^https?:/.test(location.protocol)) return location.href.split("#")[0];
+  return "";
+}
+
+/* ====================== RENDER ====================== */
+function roundRect(c,x,y,w,h,r){
+  c.beginPath();
+  c.moveTo(x+r,y); c.lineTo(x+w-r,y); c.quadraticCurveTo(x+w,y,x+w,y+r);
+  c.lineTo(x+w,y+h-r); c.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  c.lineTo(x+r,y+h); c.quadraticCurveTo(x,y+h,x,y+h-r);
+  c.lineTo(x,y+r); c.quadraticCurveTo(x,y,x+r,y); c.closePath();
+}
+
+var bgCanvas = null, bgFever = null;
+
+function buildBG(fever){
+  var c = document.createElement("canvas");
+  c.width = Math.max(1, Math.round(W*DPR));
+  c.height = Math.max(1, Math.round(H*DPR));
+  var g = c.getContext("2d");
+  g.setTransform(DPR,0,0,DPR,0,0);
+
+  var lg = g.createLinearGradient(0,0,0,H);
+  if (fever){
+    lg.addColorStop(0, "#2a0530");
+    lg.addColorStop(0.45, "#160028");
+    lg.addColorStop(1, "#0a0114");
+  } else {
+    lg.addColorStop(0, "#120322");
+    lg.addColorStop(0.5, "#0a0218");
+    lg.addColorStop(1, "#05010c");
+  }
+  g.fillStyle = lg;
+  g.fillRect(0,0,W,H);
+
+  g.save();
+  g.globalCompositeOperation = "lighter";
+  var baseHues = fever ? [310,260,190,340] : [268, 212, 305, 190];
+  for (var i=0;i<4;i++){
+    var cx = W*(0.18 + 0.24*i);
+    var cy = H*(0.20 + 0.21*i);
+    var rad = Math.max(W,H)*(0.34 + 0.05*i);
+    var hue = baseHues[i];
+    var rg = g.createRadialGradient(cx,cy,0,cx,cy,rad);
+    rg.addColorStop(0, "hsla("+hue+",95%,"+(fever?48:34)+"%,"+(fever?0.35:0.26)+")");
+    rg.addColorStop(0.55, "hsla("+hue+",90%,"+(fever?34:26)+"%,0.10)");
+    rg.addColorStop(1, "hsla("+hue+",90%,40%,0)");
+    g.fillStyle = rg;
+    g.beginPath(); g.arc(cx,cy,rad,0,Math.PI*2); g.fill();
+  }
+  g.restore();
+
+  // 星
+  for (var k=0;k<36;k++){
+    var sx = (k*97.13) % W;
+    var sy = (k*151.7) % H;
+    g.fillStyle = "rgba(190,220,255,"+(0.10 + (k%5)*0.04)+")";
+    g.fillRect(sx, sy, 1.6, 1.6);
+  }
+
+  // ビネット
+  var vg = g.createRadialGradient(W/2,H/2,Math.min(W,H)*0.32,W/2,H/2,Math.max(W,H)*0.78);
+  vg.addColorStop(0,"rgba(0,0,0,0)");
+  vg.addColorStop(1, fever ? "rgba(255,0,150,.22)" : "rgba(0,0,0,.55)");
+  g.fillStyle = vg;
+  g.fillRect(0,0,W,H);
+  return c;
+}
+
+function ensureBG(){
+  if (!bgCanvas){ bgCanvas = buildBG(false); bgFever = buildBG(true); }
+}
+
+function drawBackground(t){
+  ensureBG();
+  ctx.drawImage(feverT > 0 ? bgFever : bgCanvas, 0, 0, W, H);
+  // うっすら動く光
+  ctx.save();
+  ctx.globalCompositeOperation = "lighter";
+  var y = (t*26) % H;
+  var gg = ctx.createLinearGradient(0, y-120, 0, y+120);
+  gg.addColorStop(0, "rgba(160,60,255,0)");
+  gg.addColorStop(0.5, "rgba(160,60,255,.10)");
+  gg.addColorStop(1, "rgba(0,180,255,0)");
+  ctx.fillStyle = gg;
+  ctx.fillRect(0, y-120, W, 240);
+  ctx.restore();
+}
+
+var glowCache = {};
+function glowSprite(hue){
+  var key = Math.round(hue/12)*12;
+  if (!glowCache[key]){
+    var S = 128;
+    var c = document.createElement("canvas");
+    c.width = S; c.height = S;
+    var g = c.getContext("2d");
+    var rg = g.createRadialGradient(S/2,S/2,1,S/2,S/2,S/2);
+    rg.addColorStop(0, "hsla("+key+",100%,78%,0.85)");
+    rg.addColorStop(0.35, "hsla("+key+",100%,60%,0.42)");
+    rg.addColorStop(0.7, "hsla("+key+",100%,52%,0.14)");
+    rg.addColorStop(1, "hsla("+key+",100%,50%,0)");
+    g.fillStyle = rg;
+    g.fillRect(0,0,S,S);
+    glowCache[key] = c;
+  }
+  return glowCache[key];
+}
+
+function drawOrb(o, t){
+  if (!o.alive && o.popT < 0) return;
+  var wob = Math.sin(t*3 + o.phase)*1.2;
+  var x = o.x, y = o.y + wob;
+  var r = o.rad;
+  if (o.born > 0){ o.born -= 0.016; if (o.born < 0) o.born = 0; }
+  var appear = 1 - Math.min(1, o.born/0.25);
+  r *= 0.6 + 0.4*appear;
+
+  if (o.special){
+    ctx.save();
+    ctx.globalCompositeOperation = "lighter";
+    var hue = (t*260) % 360;
+    var rg = ctx.createRadialGradient(x, y, 1, x, y, r*2.6);
+    rg.addColorStop(0, "rgba(255,255,255,1)");
+    rg.addColorStop(0.35, "hsla("+hue+",100%,62%,0.95)");
+    rg.addColorStop(0.7, "hsla("+((hue+120)%360)+",100%,55%,0.45)");
+    rg.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = rg;
+    ctx.beginPath(); ctx.arc(x,y,r*2.6,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle = "rgba(255,255,255,.95)";
+    ctx.lineWidth = 2.4;
+    ctx.beginPath(); ctx.arc(x,y,r*1.05,0,Math.PI*2); ctx.stroke();
+    ctx.lineWidth = 5;
+    for (var rseg=0;rseg<12;rseg++){
+      ctx.strokeStyle = "hsl("+((t*200 + rseg*30)%360)+",100%,62%)";
+      ctx.beginPath();
+      ctx.arc(x, y, r*1.42, t*2 + rseg*Math.PI/6, t*2 + (rseg+1)*Math.PI/6);
+      ctx.stroke();
+    }
+    ctx.font = "900 " + Math.round(r*0.9) + "px 'Hiragino Sans',sans-serif";
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillStyle = "rgba(255,255,255,.95)";
+    ctx.shadowColor = "#fff"; ctx.shadowBlur = 10;
+    ctx.fillText("虹", x, y+1);
+    ctx.shadowBlur = 0;
+    ctx.restore();
+    return;
+  }
+
+  // グロー（キャッシュしたスプライト）
+  ctx.save();
+  ctx.globalCompositeOperation = "lighter";
+  var sp = glowSprite(o.hue);
+  ctx.drawImage(sp, x - r*2.1, y - r*2.1, r*4.2, r*4.2);
+  ctx.restore();
+
+  var light = 60 + Math.sin(t*2 + o.phase)*5;
+  var base = "hsl("+o.hue+",100%,"+light+"%)";
+
+  if (o.type === 0){
+    // クリスタル
+    ctx.beginPath();
+    var sides = 6, rot = o.rot + t*0.5;
+    for (var i=0;i<sides;i++){
+      var a2 = rot + i*Math.PI*2/sides;
+      var px = x + Math.cos(a2)*r*1.02, py = y + Math.sin(a2)*r*1.02;
+      if (i===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+    }
+    ctx.closePath();
+    ctx.fillStyle = base; ctx.fill();
+    ctx.strokeStyle = "rgba(255,255,255,.9)"; ctx.lineWidth = 1.4; ctx.stroke();
+    // ハイライト面
+    ctx.beginPath();
+    ctx.moveTo(x, y-r*0.9); ctx.lineTo(x+r*0.45, y-r*0.1); ctx.lineTo(x-r*0.1, y+r*0.2);
+    ctx.closePath();
+    ctx.fillStyle = "rgba(255,255,255,.45)"; ctx.fill();
+  } else if (o.type === 1){
+    // 気泡
+    ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2);
+    ctx.fillStyle = "hsla("+o.hue+",100%,62%,0.18)"; ctx.fill();
+    ctx.strokeStyle = "rgba(255,255,255,.92)"; ctx.lineWidth = 1.6; ctx.stroke();
+    ctx.strokeStyle = "hsla("+o.hue+",100%,75%,.85)"; ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.arc(x,y,r*0.78,0,Math.PI*2); ctx.stroke();
+    ctx.strokeStyle = "rgba(255,255,255,.7)"; ctx.lineWidth = 2.2;
+    ctx.beginPath(); ctx.arc(x-r*0.28, y-r*0.3, r*0.42, Math.PI*0.9, Math.PI*1.55); ctx.stroke();
+  } else {
+    // 角栓っぽい玉
+    ctx.beginPath();
+    for (var k=0;k<10;k++){
+      var aa = k/10*Math.PI*2;
+      var rk = r*(0.86 + 0.16*Math.sin(k*2.4 + o.phase + t));
+      var xx = x+Math.cos(aa)*rk, yy = y+Math.sin(aa)*rk;
+      if (k===0) ctx.moveTo(xx,yy); else ctx.lineTo(xx,yy);
+    }
+    ctx.closePath();
+    ctx.fillStyle = "hsl("+o.hue+",80%,"+(78)+"%)"; ctx.fill();
+    ctx.strokeStyle = "rgba(255,255,255,.75)"; ctx.lineWidth = 1.2; ctx.stroke();
+    ctx.beginPath(); ctx.arc(x+r*0.15, y+r*0.15, r*0.55, 0, Math.PI*2);
+    ctx.fillStyle = "hsla("+o.hue+",85%,52%,.55)"; ctx.fill();
+    ctx.fillStyle = "rgba(255,255,255,.85)";
+    ctx.beginPath(); ctx.arc(x-r*0.3, y-r*0.32, r*0.16,0,Math.PI*2); ctx.fill();
+  }
+}
+
+function drawPopFx(o, dt){
+  // 消えた玉の残光
+  if (o.popT >= 0){
+    o.popT += dt;
+    if (o.popT > 0.25) { o.popT = -1; return; }
+    var k = o.popT/0.25;
+    ctx.save();
+    ctx.globalCompositeOperation = "lighter";
+    ctx.strokeStyle = "hsla("+o.hue+",100%,"+(80)+"%,"+(1-k)+")";
+    ctx.lineWidth = 3*(1-k)+0.5;
+    ctx.beginPath(); ctx.arc(o.x, o.y, o.rad*(1+k*1.4), 0, Math.PI*2); ctx.stroke();
+    ctx.restore();
+  }
+}
+
+function updateParticles(dt){
+  for (var i=parts.length-1;i>=0;i--){
+    var p = parts[i];
+    p.t += dt;
+    if (p.t >= p.life){ parts.splice(i,1); continue; }
+    p.vy += p.g*dt;
+    p.vx *= (1 - 1.6*dt);
+    p.x += p.vx*dt; p.y += p.vy*dt;
+  }
+  for (var j=rings.length-1;j>=0;j--){
+    var r = rings[j];
+    r.life += dt;
+    if (r.life >= r.dur){ rings.splice(j,1); continue; }
+  }
+  for (var k=texts.length-1;k>=0;k--){
+    var tx = texts[k];
+    tx.t += dt;
+    tx.y += tx.vy*dt;
+    tx.vy *= (1-2.2*dt);
+    if (tx.t >= tx.life) texts.splice(k,1);
+  }
+  for (var d=debris.length-1;d>=0;d--){
+    var b = debris[d];
+    b.t += dt;
+    if (b.t >= b.life){ debris.splice(d,1); continue; }
+    b.vy += 680*dt;
+    b.vx *= (1-0.5*dt);
+    b.x += b.vx*dt; b.y += b.vy*dt;
+    b.rot += b.vr*dt;
+    if (b.y > H - 8){ b.y = H-8; b.vy *= -0.42; b.vx *= 0.8; b.vr *= 0.8; }
+  }
+}
+
+function drawParticles(){
+  ctx.save();
+  ctx.globalCompositeOperation = "lighter";
+  for (var i=0;i<parts.length;i++){
+    var p = parts[i];
+    var k = 1 - p.t/p.life;
+    ctx.globalAlpha = Math.max(0, k);
+    ctx.fillStyle = "hsl("+p.hue+",100%,"+(60+30*k)+"%)";
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.size*(0.6+0.8*k), 0, Math.PI*2); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+  for (var j=0;j<rings.length;j++){
+    var r = rings[j];
+    if (r.life < 0) continue;
+    var kk = r.life/r.dur;
+    var rad = r.r + (r.max - r.r) * (1-Math.pow(1-kk,3));
+    ctx.globalAlpha = Math.max(0, 1-kk);
+    if (r.rainbow){
+      var lg = ctx.createLinearGradient(r.x-rad, r.y-rad, r.x+rad, r.y+rad);
+      lg.addColorStop(0,"#ffe600"); lg.addColorStop(0.33,"#ff2fd0");
+      lg.addColorStop(0.66,"#00e5ff"); lg.addColorStop(1,"#7b2bff");
+      ctx.strokeStyle = lg;
+    } else {
+      ctx.strokeStyle = "hsl("+r.hue+",100%,72%)";
+    }
+    ctx.lineWidth = r.thick || (3 + 4*(1-kk));
+    ctx.beginPath(); ctx.arc(r.x, r.y, rad, 0, Math.PI*2); ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+  ctx.restore();
+
+  for (var d=0;d<debris.length;d++){
+    var b = debris[d];
+    var kd = Math.max(0, 1 - b.t/b.life);
+    ctx.save();
+    ctx.globalAlpha = kd;
+    ctx.translate(b.x, b.y); ctx.rotate(b.rot);
+    ctx.fillStyle = "hsl("+b.hue+",95%,60%)";
+    roundRect(ctx, -b.size/2, -b.size/3, b.size, b.size*0.66, 2);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(255,255,255,.7)"; ctx.lineWidth = 1; ctx.stroke();
+    ctx.restore();
+  }
+
+  ctx.save();
+  ctx.textAlign = "center";
+  for (var k2=0;k2<texts.length;k2++){
+    var t2 = texts[k2];
+    var a = 1 - t2.t/t2.life;
+    ctx.globalAlpha = Math.max(0,a);
+    ctx.font = "900 "+t2.size+"px 'Hiragino Sans','Noto Sans JP',sans-serif";
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = "rgba(10,0,25,.55)";
+    ctx.strokeText(t2.txt, t2.x, t2.y);
+    ctx.fillStyle = "hsl("+t2.hue+",100%,80%)";
+    ctx.shadowColor = "hsl("+t2.hue+",100%,65%)"; ctx.shadowBlur = 12;
+    ctx.fillText(t2.txt, t2.x, t2.y);
+    ctx.shadowBlur = 0;
+  }
+  ctx.restore();
+}
+
+function drawSwipeTrail(){ /* スワイプの軌跡は粒子で代用 */ }
+
+function loop(now){
+  var dt = Math.min(0.05, (now - lastFrame)/1000 || 0.016);
+  lastFrame = now;
+  var t = now/1000;
+
+  if (phase === "play"){
+    timeLeft = Math.max(0, (gameEndAt - now)/1000);
+    if (timeLeft <= 0){ timeLeft = 0; elTime.textContent = "0.0"; endGame(); }
+    else {
+      elTime.textContent = timeLeft.toFixed(1);
+      if (timeLeft <= 5) elTime.classList.add("warn");
+    }
+    if (comboT > 0){ comboT -= dt; if (comboT <= 0){ combo = 0; elCombo.classList.remove("on"); elMult.textContent = "×1.0"; } }
+    updateFever(dt);
+    // 復活
+    var pnow = performance.now();
+    for (var i=0;i<orbs.length;i++){
+      var o = orbs[i];
+      if (!o.alive && o.respawnAt && pnow >= o.respawnAt){
+        var p = cellPos(o.c, o.r);
+        o.alive = true; o.x = p.x; o.y = p.y; o.baseX = p.x; o.baseY = p.y;
+        o.hue = HUES[(Math.random()*HUES.length)|0];
+        o.type = Math.random() < 0.34 ? 1 : (Math.random() < 0.5 ? 2 : 0);
+        o.rad = CELL*0.33 + Math.random()*CELL*0.09;
+        o.born = 0.22; o.popT = -1; o.respawnAt = 0; o.special = false;
+      }
+    }
+    // 生きている玉の微揺れ
+    for (var j=0;j<orbs.length;j++){
+      var o2 = orbs[j];
+      if (!o2.alive) continue;
+      o2.x = o2.baseX + Math.sin(t*1.3 + o2.phase)*1.6;
+      o2.y = o2.baseY + Math.cos(t*1.1 + o2.phase)*1.6;
+    }
+  }
+
+  updateParticles(dt);
+  shake *= Math.pow(0.0025, dt);
+
+  ctx.save();
+  if (shake > 0.05){
+    ctx.translate((Math.random()-0.5)*shake, (Math.random()-0.5)*shake);
+  }
+  drawBackground(t);
+  if (phase !== "title"){
+    for (var k=0;k<orbs.length;k++){
+      drawPopFx(orbs[k], dt);
+      if (orbs[k].alive) drawOrb(orbs[k], t);
+    }
+  }
+  drawParticles();
+  ctx.restore();
+
+
+  requestAnimationFrame(loop);
+}
+
+/* ====================== UI BIND ====================== */
+function bindTap(el, fn){
+  el.addEventListener("click", function(ev){
+    // タッチ側で発火済みなら click を無視（二重実行防止）
+    if (el.__lastTouch && performance.now() - el.__lastTouch < 700) return;
+    fn(ev);
+  });
+  el.addEventListener("touchend", function(ev){
+    el.__lastTouch = performance.now();
+    ev.preventDefault();
+    fn(ev);
+  }, {passive:false});
+}
+
+bindTap(document.getElementById("startBtn"), function(){ sfxUIClick(); startGame(); });
+bindTap(document.getElementById("retryBtn"), function(){ sfxUIClick(); startGame(); });
+bindTap(document.getElementById("shareBtn"), function(){
+  sfxUIClick();
+  var text = "脳汁スポスポ爆破で " + fmt(score) + "点！\n"
+           + "最大 " + maxCombo + "コンボ／抜いた数 " + pops + "／虹玉確定 " + feverCount + "回\n"
+           + "25秒でどこまで抜ける？";
+  var u = "https://twitter.com/intent/tweet?text=" + encodeURIComponent(text)
+        + (gameUrl() ? "&url=" + encodeURIComponent(gameUrl()) : "")
+        + "&hashtags=" + encodeURIComponent(HASHTAG);
+  window.open(u, "_blank");
+});
+document.getElementById("muteBtn").addEventListener("click", function(){
+  ensureAudio();
+  muted = !muted;
+  if (master) master.gain.value = muted ? 0 : 0.85;
+  document.getElementById("muteBtn").textContent = muted ? "🔇" : "🔊";
+  saveMuted();
+  if (!muted) sfxUIClick();
+});
+document.getElementById("muteBtn").textContent = muted ? "🔇" : "🔊";
+
+/* ====================== DEBUG API (検証用) ====================== */
+window.GAME = {
+  state: function(){
+    return { phase: phase, score: score, pops: pops, combo: combo, maxCombo: maxCombo,
+      timeLeft: Math.round(timeLeft*10)/10, fever: feverCount, alive: aliveCount(),
+      rainbow: !!rainbow, muted: muted, orbs: orbs.length };
+  },
+  start: startGame,
+  finish: function(){ if (phase === "play"){ gameEndAt = performance.now() - 1; } },
+  popAt: function(x,y){ hitAt(x,y); return this.state(); },
+  rainbowPos: function(){ return rainbow ? {x:rainbow.x, y:rainbow.y} : null; },
+  orbList: function(){ return orbs.filter(function(o){return o.alive && !o.special;}).map(function(o){return {x:o.x,y:o.y};}); },
+  size: function(){ return {w:W,h:H}; }
+};
+
+/* ====================== BOOT ====================== */
+resize();
+fillField();
+requestAnimationFrame(function(t){ lastFrame = t; loop(t); });
+})();
+</script>
+<script src="../ads.js" defer></script>
+</body>
+</html>

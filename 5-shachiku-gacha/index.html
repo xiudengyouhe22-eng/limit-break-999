@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>令和の社畜ガチャ｜あなたの社畜レア度、〇万分の1</title>
+<meta name="description" content="配属先・初任給・上司・残業時間・ボーナス・退職理由をパチンコ風演出で次々抽選。あなたの社畜レア度と生涯年収が〇万分の1で判明する30秒人生ガチャ。">
+<meta property="og:type" content="website">
+<meta property="og:title" content="令和の社畜ガチャ">
+<meta property="og:description" content="配属先・初任給・上司・残業・ボーナス・退職理由をパチンコ風演出で抽選。あなたの社畜レア度が〇万分の1で判明する。">
+<meta property="og:site_name" content="令和の社畜ガチャ">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="令和の社畜ガチャ">
+<meta name="twitter:description" content="配属先・初任給・上司・残業・ボーナス・退職理由をパチンコ風演出で抽選。あなたの社畜レア度が〇万分の1で判明する。">
+<meta name="theme-color" content="#0a0512">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="社畜ガチャ">
+<style>
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;height:100%;width:100%;overflow:hidden;background:#0a0512;color:#f2e9ff;
+    font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans JP",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;overscroll-behavior:none;}
+  #stage{position:fixed;inset:0;overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
+  #fx{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none;z-index:6;}
+  #bgGlow{position:absolute;inset:-20%;z-index:1;pointer-events:none;
+    background:radial-gradient(circle at 50% 22%,rgba(160,60,255,.30),transparent 55%),
+               radial-gradient(circle at 20% 90%,rgba(255,60,160,.20),transparent 55%),
+               radial-gradient(circle at 86% 70%,rgba(0,200,255,.16),transparent 55%);
+    animation:hue 9s linear infinite;}
+  @keyframes hue{from{filter:hue-rotate(0)}to{filter:hue-rotate(360deg)}}
+
+  #machine{position:absolute;inset:0;z-index:4;display:flex;flex-direction:column;justify-content:flex-start;
+           padding:calc(12px + env(safe-area-inset-top)) 16px calc(14px + env(safe-area-inset-bottom));}
+  #machine::after{content:"社畜";position:absolute;left:50%;top:66%;transform:translate(-50%,-50%);
+    font-size:clamp(90px,32vw,150px);font-weight:900;letter-spacing:.08em;color:rgba(190,130,255,.055);
+    pointer-events:none;z-index:-1;white-space:nowrap;}
+  #brand{text-align:center;font-size:10px;font-weight:900;letter-spacing:.4em;color:#b98cff;margin-bottom:8px;}
+  #lamps{display:flex;justify-content:center;gap:8px;margin-bottom:10px;}
+  .lamp{width:12px;height:12px;border-radius:50%;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);}
+  .lamp.on{background:#ffd84a;box-shadow:0 0 12px #ffd84a,0 0 26px rgba(255,200,60,.6);}
+  .lamp.rainbow{background:#fff;box-shadow:0 0 14px #fff,0 0 30px #ff5ecb;animation:lampRain .35s linear infinite;}
+  @keyframes lampRain{0%{background:#ff5ecb;box-shadow:0 0 16px #ff5ecb}33%{background:#5ee6ff;box-shadow:0 0 16px #5ee6ff}66%{background:#ffe95e;box-shadow:0 0 16px #ffe95e}100%{background:#ff5ecb}}
+
+  #reelFrame{position:relative;margin:0 auto;width:100%;max-width:360px;border-radius:22px;padding:14px;
+    background:linear-gradient(180deg,rgba(40,16,70,.9),rgba(16,6,30,.94));
+    border:1px solid rgba(180,120,255,.35);box-shadow:0 18px 50px rgba(0,0,0,.6),inset 0 0 40px rgba(120,40,200,.25);}
+  #reelFrame::after{content:"";position:absolute;inset:6px;border-radius:16px;border:1px solid rgba(255,255,255,.07);pointer-events:none;}
+  #slotLabel{text-align:center;font-size:11px;font-weight:900;letter-spacing:.28em;color:#c9a6ff;margin-bottom:6px;}
+  #reel{position:relative;height:150px;border-radius:14px;overflow:hidden;
+    background:linear-gradient(180deg,#120a22,#1d0f33 50%,#120a22);
+    border:1px solid rgba(150,90,255,.3);display:flex;align-items:center;justify-content:center;padding:0 10px;}
+  #reel::before,#reel::after{content:"";position:absolute;left:0;right:0;height:34px;z-index:2;pointer-events:none;}
+  #reel::before{top:0;background:linear-gradient(180deg,#120a22,rgba(18,10,34,0));}
+  #reel::after{bottom:0;background:linear-gradient(0deg,#120a22,rgba(18,10,34,0));}
+  #reelText{font-size:26px;font-weight:900;text-align:center;line-height:1.24;color:#fff;
+    text-shadow:0 0 18px rgba(180,120,255,.8);letter-spacing:.01em;word-break:break-word;}
+  #reelText.spin{filter:blur(1.4px);opacity:.85;}
+  #reelText.gold{color:#ffe066;text-shadow:0 0 22px rgba(255,200,40,.9),0 0 50px rgba(255,150,0,.5);}
+  #reelText.rainbow{background:linear-gradient(90deg,#ff5ecb,#ffe95e,#5ee6ff,#b06bff,#ff5ecb);
+    -webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 14px rgba(255,255,255,.6));}
+  #reelSub{text-align:center;font-size:11px;font-weight:800;color:#a98cff;margin-top:8px;min-height:15px;letter-spacing:.1em;}
+
+  #midPanel{margin:14px auto 0;width:100%;max-width:360px;text-align:center;padding:10px 12px;border-radius:14px;
+    background:rgba(30,14,52,.55);border:1px solid rgba(180,120,255,.18);}
+  #midPanel .mk{font-size:9px;font-weight:900;letter-spacing:.26em;color:#a98cff;}
+  #midPanel .mv{font-size:19px;font-weight:900;margin-top:3px;
+    background:linear-gradient(90deg,#ff5ecb,#ffe95e,#5ee6ff);-webkit-background-clip:text;background-clip:text;color:transparent;min-height:24px;}
+  #midPanel .mp{font-size:9.5px;font-weight:800;color:#8f74b8;letter-spacing:.12em;margin-top:2px;}
+  #history{margin-top:10px;flex:0 0 auto;min-height:0;overflow:hidden;display:flex;flex-direction:column;gap:5px;justify-content:flex-start;}
+  .hrow{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:6px 10px;border-radius:9px;
+    background:rgba(255,255,255,.045);border:1px solid rgba(180,120,255,.12);font-size:11.5px;
+    animation:slideIn .28s ease-out;}
+  @keyframes slideIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .hrow .k{color:#a98cff;font-weight:800;flex:0 0 auto;font-size:10.5px;letter-spacing:.06em;}
+  .hrow .v{color:#fff;font-weight:800;text-align:right;flex:1;}
+  .hrow.rare{border-color:rgba(255,210,80,.55);background:rgba(255,200,60,.10);}
+  .hrow.rare .v{color:#ffe066;text-shadow:0 0 12px rgba(255,200,60,.6);}
+
+  #mainBtn{margin:auto auto 0;width:100%;max-width:360px;min-height:62px;border:0;border-radius:20px;
+    font-family:inherit;font-size:18px;font-weight:900;letter-spacing:.06em;color:#2a1200;cursor:pointer;
+    background:linear-gradient(135deg,#ffe98a,#ffc23c 42%,#ff8a1f);
+    box-shadow:0 12px 34px rgba(255,160,30,.42),inset 0 -3px 0 rgba(0,0,0,.2);touch-action:manipulation;
+    transition:transform .08s;position:relative;z-index:8;}
+  #mainBtn:active{transform:scale(.972);}
+  #mainBtn.off{opacity:.4;}
+  #holdHint{margin-top:7px;text-align:center;font-size:10px;color:#8f74b8;letter-spacing:.08em;}
+
+  #callout{position:absolute;left:0;right:0;top:32%;z-index:9;text-align:center;pointer-events:none;opacity:0;}
+  #callout .c1{font-size:clamp(32px,12vw,50px);font-weight:900;color:#fff;
+    text-shadow:0 0 22px #ff3bd0,0 0 60px #ff0080,0 0 90px #ff0080;}
+  #callout .c2{font-size:12px;font-weight:900;letter-spacing:.26em;color:#ffe066;margin-top:5px;}
+  #callout.show{animation:callPop 1s cubic-bezier(.16,1.6,.4,1) forwards;}
+  @keyframes callPop{0%{opacity:0;transform:scale(.4)}18%{opacity:1;transform:scale(1.14)}34%{transform:scale(1)}78%{opacity:1}100%{opacity:0;transform:scale(1.06)}}
+
+  #flash{position:fixed;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:15;}
+  #flash.on{animation:flashOut .4s ease-out forwards;}
+  @keyframes flashOut{0%{opacity:.92}100%{opacity:0}}
+
+  #mute{position:absolute;right:10px;top:calc(8px + env(safe-area-inset-top));z-index:12;width:34px;height:34px;
+    border-radius:11px;border:1px solid rgba(255,255,255,.16);background:rgba(20,10,30,.6);color:#d9c2ff;
+    font-size:15px;display:flex;align-items:center;justify-content:center;touch-action:manipulation;cursor:pointer;}
+
+  .screen{position:fixed;inset:0;z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;padding:calc(20px + env(safe-area-inset-top)) 18px calc(20px + env(safe-area-inset-bottom));
+    transition:opacity .3s ease,visibility .3s;overflow-y:auto;overscroll-behavior:contain;}
+  .screen.hide{opacity:0;visibility:hidden;pointer-events:none;}
+  .screen::before{content:"";position:absolute;inset:0;z-index:-1;}
+  #scrTitle::before{background:linear-gradient(180deg,rgba(12,5,22,.93),rgba(6,2,12,.985));}
+  .kicker{font-size:9.5px;font-weight:900;letter-spacing:.36em;color:#c9a6ff;margin-bottom:8px;}
+  .ttl{font-size:clamp(30px,11vw,46px);font-weight:900;line-height:1.14;letter-spacing:-.01em;
+    background:linear-gradient(180deg,#fff,#ffd0f4 40%,#b06bff);-webkit-background-clip:text;background-clip:text;color:transparent;
+    filter:drop-shadow(0 4px 26px rgba(200,90,255,.55));}
+  .ttl-sub{margin-top:9px;font-size:12px;font-weight:800;color:#ffd84a;letter-spacing:.06em;}
+  .rule{margin-top:16px;width:100%;max-width:336px;display:flex;flex-direction:column;gap:8px;font-size:12px;
+    line-height:1.55;font-weight:700;color:#b6a0cc;text-align:left;}
+  .rule div{background:rgba(255,255,255,.045);border:1px solid rgba(180,120,255,.14);border-radius:11px;padding:9px 11px;}
+  .rule b{color:#fff;} .rule .em{color:#ffd84a;font-weight:900;}
+  .btn{margin-top:16px;width:100%;max-width:336px;min-height:58px;border:0;border-radius:18px;font-family:inherit;
+    font-size:17px;font-weight:900;letter-spacing:.04em;color:#2a1200;cursor:pointer;
+    background:linear-gradient(135deg,#ffe98a,#ffc23c 42%,#ff8a1f);box-shadow:0 12px 32px rgba(255,160,30,.4);
+    touch-action:manipulation;display:flex;align-items:center;justify-content:center;gap:8px;transition:transform .08s;}
+  .btn:active{transform:scale(.965);}
+  .btn.ghost{background:rgba(255,255,255,.06);color:#e6d8f7;border:1px solid rgba(200,160,255,.25);box-shadow:none;min-height:46px;font-size:14px;}
+  .btn.x{background:linear-gradient(135deg,#2b2d33,#0d0f13);color:#fff;border:1px solid rgba(255,255,255,.26);box-shadow:0 8px 24px rgba(0,0,0,.5);}
+  .best{margin-top:12px;font-size:11px;font-weight:800;color:#c9a6ff;letter-spacing:.06em;}
+
+  /* result */
+  #scrResult::before{background:
+    radial-gradient(circle at 50% 12%,rgba(255,60,180,.18),transparent 60%),
+    radial-gradient(circle at 78% 84%,rgba(120,60,255,.18),transparent 58%),
+    linear-gradient(180deg,rgba(14,6,26,.985),rgba(4,2,10,.995));}
+  .rs-k{font-size:9.5px;font-weight:900;letter-spacing:.34em;color:#ffd84a;margin-bottom:5px;}
+  #rsRare{font-size:clamp(34px,12.5vw,52px);font-weight:900;line-height:1.04;letter-spacing:-.01em;
+    background:linear-gradient(90deg,#ff5ecb,#ffe95e,#5ee6ff,#b06bff);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    filter:drop-shadow(0 0 22px rgba(255,120,220,.55));}
+  #rsRareSub{font-size:11px;font-weight:800;color:#c9a6ff;letter-spacing:.16em;margin-top:5px;}
+  #rsTitle{font-size:18px;font-weight:900;color:#fff;margin-top:12px;text-shadow:0 0 18px rgba(255,120,220,.6);}
+  #rsLife{font-size:13px;font-weight:900;color:#ffd84a;margin-top:6px;letter-spacing:.04em;}
+  .rs-card{margin-top:14px;width:100%;max-width:340px;background:rgba(20,10,34,.85);border:1px solid rgba(180,120,255,.26);
+    border-radius:16px;padding:10px 14px;box-shadow:0 12px 34px rgba(0,0,0,.5);}
+  .rs-row{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px dashed rgba(255,255,255,.08);font-size:12px;}
+  .rs-row:last-child{border-bottom:0;}
+  .rs-row .k{color:#a98cff;font-weight:800;flex:0 0 84px;text-align:left;}
+  .rs-row .v{color:#fff;font-weight:900;flex:1;text-align:right;}
+  .rs-btns{margin-top:14px;width:100%;max-width:340px;display:flex;flex-direction:column;gap:8px;}
+  .rs-btns .btn{margin-top:0;max-width:none;}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="bgGlow"></div>
+  <canvas id="fx"></canvas>
+
+  <div id="machine" style="visibility:hidden">
+    <div id="brand">令和・社畜養成システム</div>
+    <div id="lamps">
+      <div class="lamp"></div><div class="lamp"></div><div class="lamp"></div>
+      <div class="lamp"></div><div class="lamp"></div><div class="lamp"></div>
+    </div>
+    <div id="reelFrame">
+      <div id="slotLabel">配属先</div>
+      <div id="reel"><span id="reelText">？？？</span></div>
+      <div id="reelSub">タップで回す</div>
+    </div>
+    <div id="midPanel">
+      <div class="mk">現在の社畜レア度</div>
+      <div class="mv" id="liveRare">—</div>
+      <div class="mp" id="liveCount">0 / 6 抽選済み</div>
+    </div>
+    <div id="history"></div>
+    <button id="mainBtn">ガチャを回す</button>
+    <div id="holdHint">連打OK／長押しでスキップ</div>
+  </div>
+
+  <div id="callout"><div class="c1"></div><div class="c2"></div></div>
+  <div id="flash"></div>
+  <div id="mute">🔊</div>
+
+  <div id="scrTitle" class="screen">
+    <div class="kicker">30-SECOND LIFE GACHA</div>
+    <div class="ttl">令和の<br>社畜ガチャ</div>
+    <div class="ttl-sub">あなたの社畜レア度、〇万分の1</div>
+    <div class="rule">
+      <div>ボタンをタップするたびに<b>配属先・初任給・上司・残業・ボーナス・退職理由</b>が抽選される。</div>
+      <div>レア演出が出るほど<span class="em">社畜レア度</span>が跳ね上がる。虹が出たら…。</div>
+      <div>最後に<span class="em">生涯年収と称号</span>が判明。𝕏でシェアできる。</div>
+    </div>
+    <button class="btn" id="startBtn">人生を回す ▶</button>
+    <div class="best" id="bestTxt"></div>
+      <a class="pkl-arcade-link" href="../arcade/" style="display:inline-block;margin-top:12px;padding:7px 14px;border-radius:99px;border:1px solid rgba(140,210,255,.38);background:rgba(8,16,32,.55);color:#9fd8ff;font-size:11px;font-weight:700;letter-spacing:.04em;text-decoration:none;opacity:.8;pointer-events:auto;line-height:1.3;-webkit-tap-highlight-color:transparent;">🎮 他の脳汁ゲームも遊ぶ（全11本）</a>
+  </div>
+
+  <div id="scrResult" class="screen hide">
+    <div class="rs-k">YOUR RARITY</div>
+    <div id="rsRare">約0万分の1</div>
+    <div id="rsRareSub">社畜レア度</div>
+    <div id="rsTitle">—</div>
+    <div id="rsLife">生涯年収：—</div>
+    <div class="rs-card" id="rsCard"></div>
+    <div class="rs-btns">
+      <button class="btn x" id="shareBtn"><span>𝕏</span> 結果をシェア</button>
+      <button class="btn ghost" id="retryBtn">もう一度、人生を回す</button>
+    </div>
+      <a class="pkl-arcade-link" href="../arcade/" style="display:inline-block;margin-top:12px;padding:7px 14px;border-radius:99px;border:1px solid rgba(140,210,255,.38);background:rgba(8,16,32,.55);color:#9fd8ff;font-size:11px;font-weight:700;letter-spacing:.04em;text-decoration:none;opacity:.8;pointer-events:auto;line-height:1.3;-webkit-tap-highlight-color:transparent;">🎮 他の脳汁ゲームも遊ぶ（全11本）</a>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+var $=function(s){return document.querySelector(s)};
+function clamp(v,a,b){return v<a?a:(v>b?b:v)}
+function rnd(a,b){return a+Math.random()*(b-a)}
+function ri(a,b){return Math.floor(rnd(a,b+1))}
+var LS_BEST="shachiku_best_v1", LS_MUTE="shachiku_mute_v1";
+
+/* ---------------- audio ---------------- */
+var AU={ctx:null,master:null,muted:false};
+try{ AU.muted=localStorage.getItem(LS_MUTE)==="1"; }catch(e){}
+function audioInit(){
+  if(AU.ctx) return;
+  var AC=window.AudioContext||window.webkitAudioContext; if(!AC) return;
+  try{ AU.ctx=new AC(); AU.master=AU.ctx.createGain(); AU.master.gain.value=AU.muted?0:0.5; AU.master.connect(AU.ctx.destination);}catch(e){AU.ctx=null;}
+}
+function audioResume(){ audioInit(); if(AU.ctx&&AU.ctx.state==="suspended"){try{AU.ctx.resume()}catch(e){}} }
+function nowT(){return AU.ctx?AU.ctx.currentTime:0}
+function tone(o){
+  if(!AU.ctx||AU.muted) return;
+  var t0=nowT()+(o.delay||0),osc=AU.ctx.createOscillator(),g=AU.ctx.createGain();
+  osc.type=o.type||"sine"; osc.frequency.setValueAtTime(Math.max(20,o.f||440),t0);
+  if(o.to) osc.frequency.exponentialRampToValueAtTime(Math.max(20,o.to),t0+(o.dur||0.2));
+  var v=o.v==null?0.16:o.v;
+  g.gain.setValueAtTime(0.0001,t0); g.gain.exponentialRampToValueAtTime(v,t0+0.008);
+  g.gain.exponentialRampToValueAtTime(0.0001,t0+(o.dur||0.2));
+  osc.connect(g); g.connect(AU.master); osc.start(t0); osc.stop(t0+(o.dur||0.2)+0.05);
+}
+function noiseBurst(o){
+  if(!AU.ctx||AU.muted) return;
+  var dur=o.dur||0.2,t0=nowT()+(o.delay||0);
+  var len=Math.floor(AU.ctx.sampleRate*dur),buf=AU.ctx.createBuffer(1,len,AU.ctx.sampleRate),d=buf.getChannelData(0);
+  for(var i=0;i<len;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/len,o.pow||2);
+  var src=AU.ctx.createBufferSource(); src.buffer=buf;
+  var f=AU.ctx.createBiquadFilter(); f.type=o.type||"lowpass"; f.frequency.setValueAtTime(o.f||1200,t0);
+  if(o.fTo) f.frequency.exponentialRampToValueAtTime(Math.max(60,o.fTo),t0+dur);
+  var g=AU.ctx.createGain(); g.gain.setValueAtTime(o.v==null?0.2:o.v,t0);
+  g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
+  src.connect(f); f.connect(g); g.connect(AU.master); src.start(t0); src.stop(t0+dur+0.02);
+}
+function sfxReel(){ for(var i=0;i<3;i++) tone({type:"square",f:900-i*120,dur:0.03,v:0.05,delay:i*0.05}); }
+function sfxStop(){ tone({type:"square",f:700,to:1200,dur:0.07,v:0.09}); noiseBurst({dur:0.12,f:2000,fTo:600,v:0.1}); }
+function sfxRare(){
+  tone({type:"triangle",f:1200,to:2400,dur:0.5,v:0.15});
+  tone({type:"sine",f:1600,dur:0.5,v:0.10,delay:0.05});
+  tone({type:"sine",f:2400,dur:0.6,v:0.08,delay:0.12});
+  noiseBurst({dur:0.6,f:6000,fTo:1200,type:"bandpass",v:0.09});
+}
+function sfxSuper(){
+  "1357".split("").forEach(function(c,i){ tone({type:"square",f:523*Math.pow(2,i/12*3),dur:0.18,v:0.10,delay:i*0.055}); });
+  tone({type:"sawtooth",f:220,to:2200,dur:0.6,v:0.12});
+  noiseBurst({dur:0.9,f:400,fTo:9000,type:"highpass",v:0.14});
+}
+function sfxWin(){
+  [523,659,784,1046,1318].forEach(function(f,i){ tone({type:"triangle",f:f,dur:0.24,v:0.12,delay:i*0.085}); });
+  noiseBurst({dur:0.7,f:5000,fTo:9000,type:"highpass",v:0.08});
+}
+
+/* ---------------- data ---------------- */
+/* tier: 1=ありふれ / 2=普通 / 3=やや珍 / 4=レア / 5=激レア / 6=虹 */
+var SLOTS=[
+  {key:"配属先", items:[
+    ["営業一課",1],["経理部 経理課",1],["総務部 総務課",1],["情報システム部",2],["人事部 採用担当",2],
+    ["広報部",2],["物流センター",2],["カスタマーサポート",3],["地方支社 営業所",3],["役員付き秘書室",3],
+    ["業務改善推進室（閑職）",4],["新規事業開発部（予算なし）",4],["関連会社への出向",4],
+    ["子会社の子会社",5],["本社の倉庫（通称：牢屋）",5],["社長の自宅兼事務所",6],["グループ会社の解散準備室",6]
+  ]},
+  {key:"初任給", items:[
+    ["月18万円",1],["月20万円",1],["月21万円",2],["月22万円",2],["月24万円",2],["月26万円",3],
+    ["月28万円",3],["月30万円",4],["月35万円",4],["月40万円（ただしみなし残業80h）",5],
+    ["月12万円（研修名目）",5],["月8万円＋夢",6],["月0円（株券支給）",6]
+  ]},
+  {key:"上司", items:[
+    ["昭和の体育会系部長",1],["無口な課長",1],["話が長い専務",2],["数字しか見ない本部長",2],
+    ["定時で帰る先輩",3],["謎の顧問",3],["毎日説教する社長",3],["無能だが優しい上司",4],
+    ["般若のような女上司",4],["海外在住で連絡が取れない上司",5],["元ヤン課長（義理堅い）",5],["ほぼ幽霊",6]
+  ]},
+  {key:"残業時間", items:[
+    ["月5時間",1],["月10時間",1],["月20時間",2],["月30時間",2],["月45時間",2],["月60時間",3],
+    ["月80時間",3],["月100時間",4],["月120時間",4],["月150時間",5],["月200時間",5],["月300時間（産業医が泣いた）",6]
+  ]},
+  {key:"ボーナス", items:[
+    ["年間2ヶ月",1],["年間3ヶ月",1],["年間4ヶ月",2],["年間5ヶ月",2],["年間6ヶ月",3],["年間8ヶ月",3],
+    ["年間10ヶ月",4],["年間12ヶ月",4],["現物支給（米30kg）",5],["社長の似顔絵",5],["0.1ヶ月",5],["なし（業績悪化）",6]
+  ]},
+  {key:"退職理由", items:[
+    ["転職",1],["家庭の事情",1],["寿退社",2],["人間関係",2],["給与未払い",3],["パワハラ",3],
+    ["燃え尽き",4],["会社が消滅",4],["事業売却",4],["過労",5],["謎の失踪",5],["逮捕",5],["死亡（過労）",6]
+  ]}
+];
+var TIER_N={1:3,2:8,3:25,4:120,5:1500,6:25000};
+var TIER_W={1:40,2:26,3:14,4:6,5:1.6,6:0.35};
+var TIER_NAME={1:"",2:"",3:"レア",4:"激レア",5:"超激レア",6:"虹確定"};
+
+/* ---------------- state ---------------- */
+var S={mode:"title",slot:0,results:[],denom:1,spinning:false,t:0,rareCount:0,rainbow:false};
+var elLamps=Array.prototype.slice.call(document.querySelectorAll(".lamp"));
+var elSlotLabel=$("#slotLabel"), elReelText=$("#reelText"), elReelSub=$("#reelSub");
+var elHistory=$("#history"), elMainBtn=$("#mainBtn"), elCallout=$("#callout"), elFlash=$("#flash");
+var scrTitle=$("#scrTitle"), scrResult=$("#scrResult");
+
+/* ---------------- FX canvas ---------------- */
+var fx=$("#fx"), fxc=fx.getContext("2d");
+var W=360,H=640,DPR=1;
+function resize(){
+  DPR=Math.min(2,window.devicePixelRatio||1);
+  W=fx.clientWidth||window.innerWidth; H=fx.clientHeight||window.innerHeight;
+  fx.width=Math.round(W*DPR); fx.height=Math.round(H*DPR);
+  fxc.setTransform(DPR,0,0,DPR,0,0);
+}
+window.addEventListener("resize",resize);
+window.addEventListener("orientationchange",function(){setTimeout(resize,120)});
+
+var parts=[];
+function spark(x,y,n,color,power){
+  for(var i=0;i<n;i++){
+    var a=rnd(0,6.2832),sp=rnd(80,620)*(power||1);
+    parts.push({x:x,y:y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-80,
+      life:rnd(0.4,1.1),max:1.1,size:rnd(1.5,4),color:color||"#ffd84a",g:520});
+  }
+}
+function rain(n){
+  for(var i=0;i<n;i++){
+    parts.push({x:rnd(0,W),y:rnd(-H*0.3,0),vx:rnd(-40,40),vy:rnd(160,420),
+      life:rnd(1.0,2.0),max:2.0,size:rnd(1.4,3.4),
+      color:["#ff5ecb","#ffe95e","#5ee6ff","#b06bff","#ffffff"][ri(0,4)],g:120});
+  }
+}
+function drawFx(dt){
+  fxc.clearRect(0,0,W,H);
+  for(var i=parts.length-1;i>=0;i--){
+    var p=parts[i];
+    p.x+=p.vx*dt; p.y+=p.vy*dt; p.vy+=p.g*dt; p.vx*=Math.pow(0.4,dt);
+    p.life-=dt;
+    if(p.life<=0||p.y>H+20){ parts.splice(i,1); continue; }
+    fxc.globalAlpha=clamp(p.life/0.7,0,1);
+    fxc.fillStyle=p.color;
+    fxc.fillRect(p.x,p.y,p.size,p.size*(1+Math.abs(p.vy)/400));
+  }
+  fxc.globalAlpha=1;
+}
+
+/* ---------------- flow ---------------- */
+function startRun(){
+  audioResume();
+  S.mode="play"; S.slot=0; S.results=[]; S.denom=1; S.spinning=false; S.rareCount=0; S.rainbow=false;
+  elHistory.innerHTML="";
+  $("#liveRare").textContent="—"; $("#liveCount").textContent="0 / 6 抽選済み";
+  elLamps.forEach(function(l){l.className="lamp"});
+  elReelText.textContent="？？？"; elReelText.className="";
+  elSlotLabel.textContent=SLOTS[0].key;
+  elReelSub.textContent="タップで回す";
+  elMainBtn.textContent="ガチャを回す"; elMainBtn.classList.remove("off");
+  scrTitle.classList.add("hide"); scrResult.classList.add("hide");
+  $("#machine").style.visibility="visible";
+  parts.length=0;
+  tone({type:"triangle",f:440,to:660,dur:0.2,v:0.12});
+}
+function pickItem(slot){
+  var pool=slot.items;
+  // weighted toward common
+  var total=0, weights=pool.map(function(it){ return TIER_W[it[1]]||1; });
+  weights.forEach(function(w){total+=w});
+  var r=Math.random()*total;
+  for(var i=0;i<pool.length;i++){ r-=weights[i]; if(r<=0) return {text:pool[i][0],tier:pool[i][1]}; }
+  return {text:pool[0][0],tier:pool[0][1]};
+}
+function spin(){
+  if(S.mode!=="play"||S.spinning) return;
+  if(S.slot>=SLOTS.length){ finishRun(); return; }
+  audioResume();
+  var slot=SLOTS[S.slot];
+  var final=pickItem(slot);
+  S.spinning=true;
+  elMainBtn.classList.add("off");
+  elReelSub.textContent="抽選中…";
+  elSlotLabel.textContent=slot.key;
+  sfxReel();
+
+  var t0=performance.now();
+  var dur=520+Math.random()*260;
+  var cycle=55;
+  var last=0;
+  var stopTick=function(){
+    elReelText.className="";
+    elReelText.textContent=final.text;
+    elReelSub.textContent=TIER_NAME[final.tier]?TIER_NAME[final.tier]+"当選":"";
+    // record
+    S.results.push({key:slot.key,text:final.text,tier:final.tier});
+    S.denom*=TIER_N[final.tier];
+    addHistory(slot.key,final);
+    elLamps[S.slot].className="lamp on";
+    if(final.tier>=5){
+      S.rareCount++;
+      S.rainbow=true;
+      elReelText.className="rainbow";
+      elLamps[S.slot].className="lamp rainbow";
+      sfxSuper();
+      showCallout(final.tier===6?"虹確定":"超激アツ",TIER_NAME[final.tier]);
+      elFlash.classList.remove("on"); void elFlash.offsetWidth; elFlash.classList.add("on");
+      spark(W/2,H*0.34,50,"#ffd84a",1.3);
+      rain(40);
+    } else if(final.tier>=4){
+      elReelText.className="gold";
+      sfxRare();
+      showCallout("激アツ","RARE");
+      spark(W/2,H*0.34,26,"#ffe066",1);
+    } else {
+      sfxStop();
+    }
+    S.slot++;
+    S.spinning=false;
+    $("#liveRare").textContent=fmtDenom(Math.min(S.denom,1e9));
+    $("#liveCount").textContent=S.slot+" / 6 抽選済み";
+    if(S.slot>=SLOTS.length){
+      elMainBtn.textContent="結果を見る ▶";
+      elSlotLabel.textContent="FINISH";
+      elReelSub.textContent="タップで査定へ";
+      elMainBtn.classList.remove("off");
+    } else {
+      elMainBtn.textContent="次を回す";
+      elMainBtn.classList.remove("off");
+    }
+  };
+  var anim=function(ts){
+    if(!S.spinning) return;
+    if(ts-t0>=dur){ stopTick(); return; }
+    if(ts-last>cycle){
+      last=ts;
+      var pool=slot.items;
+      elReelText.className="spin";
+      elReelText.textContent=pool[ri(0,pool.length-1)][0];
+      if(Math.random()<0.35) sfxReel();
+    }
+    requestAnimationFrame(anim);
+  };
+  requestAnimationFrame(anim);
+}
+function addHistory(key,item){
+  var row=document.createElement("div");
+  row.className="hrow"+(item.tier>=4?" rare":"");
+  row.innerHTML='<span class="k">'+key+'</span><span class="v">'+item.text+'</span>';
+  elHistory.appendChild(row);
+  if(elHistory.children.length>6){ elHistory.removeChild(elHistory.children[0]); }
+}
+function showCallout(a,b){
+  elCallout.querySelector(".c1").textContent=a;
+  elCallout.querySelector(".c2").textContent=b||"";
+  elCallout.classList.remove("show"); void elCallout.offsetWidth; elCallout.classList.add("show");
+}
+
+/* ---------------- result ---------------- */
+function finishRun(){
+  if(S.mode!=="play") return;
+  S.mode="result";
+  var res=computeLife();
+  S.final=res;
+  elMainBtn.classList.add("off");
+  showResult(res);
+}
+function computeLife(){
+  var o={}; S.results.forEach(function(r){o[r.key]=r;});
+  var salary=0;
+  if(o["初任給"]){
+    var m=o["初任給"].text.match(/月([\d.]+)万円/);
+    salary=m?parseFloat(m[1]):0;
+    if(o["初任給"].text.indexOf("株券")>=0) salary=0;
+  }
+  var bonusMonths=0;
+  if(o["ボーナス"]){
+    var bm=o["ボーナス"].text.match(/年間([\d.]+)ヶ月/);
+    bonusMonths=bm?parseFloat(bm[1]):0;
+    if(o["ボーナス"].text.indexOf("なし")>=0) bonusMonths=0;
+    if(o["ボーナス"].text.indexOf("現物")>=0) bonusMonths=0;
+    if(o["ボーナス"].text.indexOf("似顔絵")>=0) bonusMonths=0;
+  }
+  var ot=0;
+  if(o["残業時間"]){
+    var om=o["残業時間"].text.match(/月([\d]+)時間/);
+    ot=om?parseInt(om[1],10):0;
+  }
+  var otPay=ot*1500*12;
+  var annual=Math.round(salary*10000*(12+bonusMonths)+otPay);
+  var denom=Math.round(S.denom);
+  var onlyOne=denom>=2000000000;
+  return {annual:annual,salary:salary,bonus:bonusMonths,ot:ot,denom:denom,onlyOne:onlyOne};
+}
+function fmtDenom(d){
+  if(d>=1e8) return "約"+(d/1e8).toFixed(d>=1e9?0:1)+"億分の1";
+  if(d>=1e4) return "約"+(d/1e4).toFixed(0)+"万分の1";
+  return "約"+Math.round(d)+"分の1";
+}
+function fmtMoney(y){
+  if(y<=0) return "0円（夢）";
+  if(y>=1e8) return (y/1e8).toFixed(2)+"億円";
+  if(y>=1e4) return Math.round(y/1e4).toLocaleString("ja-JP")+"万円";
+  return y.toLocaleString("ja-JP")+"円";
+}
+function titleFor(res){
+  var ot=res.ot, bonus=res.bonus, salary=res.salary;
+  if(res.onlyOne) return "伝説の社畜・人類卒業";
+  if(ot>=150) return "社畜の最終形態";
+  if(ot>=100) return "社畜の上位種";
+  if(ot>=80) return "令和の丸投げ受付嬢";
+  if(bonus>=10) return "賞与だけで生きる男";
+  if(salary>=35) return "高給取りの社畜";
+  if(salary<=12) return "夢を給与代わりにした男";
+  if(ot<=10) return "社畜になりきれない男";
+  return "ふつうの社畜";
+}
+function showResult(res){
+  var d=S.denom;
+  $("#rsRare").textContent=res.onlyOne?"約20億分の1":fmtDenom(d>1e9?1e9:d);
+  $("#rsRareSub").textContent=res.onlyOne?"社畜レア度・測定不能":"社畜レア度";
+  $("#rsTitle").textContent="「"+titleFor(res)+"」";
+  $("#rsLife").textContent="生涯年収："+fmtMoney(res.annual*40)+"（40年勤務換算）";
+  var card=$("#rsCard");
+  card.innerHTML="";
+  S.results.forEach(function(r){
+    var row=document.createElement("div");
+    row.className="rs-row";
+    row.innerHTML='<span class="k">'+r.key+'</span><span class="v">'+r.text+'</span>';
+    card.appendChild(row);
+  });
+  $("#machine").style.visibility="hidden";
+  scrResult.classList.remove("hide");
+  scrResult.style.pointerEvents="none";
+  setTimeout(function(){ scrResult.style.pointerEvents=""; },700);
+  sfxWin();
+  rain(70);
+  spark(W/2,H*0.22,60,"#ffd84a",1.2);
+  elFlash.classList.remove("on"); void elFlash.offsetWidth; elFlash.classList.add("on");
+  try{
+    var best=parseInt(localStorage.getItem(LS_BEST)||"0",10)||0;
+    if(d>best){ best=d; localStorage.setItem(LS_BEST,String(best)); }
+  }catch(e){}
+}
+
+/* ---------------- input ---------------- */
+var holdTimer=null, holdInterval=null;
+function pressStart(e){
+  e.preventDefault(); e.stopPropagation();
+  audioResume();
+  if(S.mode==="title") return;
+  if(S.mode==="result") return;
+  if(S.slot>=SLOTS.length&&!S.spinning){ finishRun(); return; }
+  spin();
+  clearTimeout(holdTimer); clearInterval(holdInterval);
+  holdTimer=setTimeout(function(){
+    holdInterval=setInterval(function(){
+      if(S.mode!=="play"){ clearInterval(holdInterval); return; }
+      if(!S.spinning) spin();
+    },240);
+  },520);
+}
+function pressEnd(){
+  clearTimeout(holdTimer); clearInterval(holdInterval); holdTimer=null; holdInterval=null;
+}
+elMainBtn.addEventListener("pointerdown",pressStart);
+elMainBtn.addEventListener("touchstart",function(e){ e.stopPropagation(); },{passive:true});
+elMainBtn.addEventListener("pointerup",pressEnd);
+elMainBtn.addEventListener("pointercancel",pressEnd);
+elMainBtn.addEventListener("pointerleave",pressEnd);
+elMainBtn.addEventListener("click",function(e){ e.stopPropagation(); });
+
+/* mute */
+var elMute=$("#mute");
+elMute.addEventListener("pointerdown",function(e){e.stopPropagation()});
+elMute.addEventListener("click",function(e){
+  e.stopPropagation(); AU.muted=!AU.muted;
+  try{localStorage.setItem(LS_MUTE,AU.muted?"1":"0")}catch(err){}
+  if(AU.master) AU.master.gain.value=AU.muted?0:0.5;
+  elMute.textContent=AU.muted?"🔇":"🔊";
+});
+elMute.textContent=AU.muted?"🔇":"🔊";
+
+function onTap(el,fn){
+  var last=0;
+  el.addEventListener("pointerdown",function(e){e.stopPropagation()});
+  el.addEventListener("touchstart",function(e){e.stopPropagation()},{passive:true});
+  el.addEventListener("click",function(e){
+    e.stopPropagation();
+    var t=performance.now(); if(t-last<320) return; last=t; fn();
+  });
+}
+onTap($("#startBtn"),startRun);
+onTap($("#retryBtn"),startRun);
+onTap($("#shareBtn"),function(){
+  audioResume();
+  var res=S.final; if(!res) return;
+  var txt="令和の社畜ガチャを回したら、社畜レア度「"+(res.onlyOne?"約20億分の1・測定不能":fmtDenom(Math.min(S.denom,1e9)))+"」でした。\n"
+    +"称号：「"+titleFor(res)+"」\n"
+    +"残業 月"+res.ot+"時間／賞与 年"+res.bonus+"ヶ月／生涯年収 "+fmtMoney(res.annual*40)+"\n"
+    +"お前の社畜レア度は？";
+  var url=gameUrl();
+  var u="https://twitter.com/intent/tweet?text="+encodeURIComponent(txt)
+      +(url?"&url="+encodeURIComponent(url):"")
+      +"&hashtags="+encodeURIComponent("社畜ガチャ,令和の社畜,バカゲー");
+  window.open(u,"_blank");
+});
+function gameUrl(){
+  if(/^https?:/.test(location.protocol)) return location.href.split("#")[0];
+  return "https://xiudengyouhe22-eng.github.io/shachiku-gacha/";
+}
+
+/* ---------------- loop ---------------- */
+var lastT=0;
+function loop(ts){
+  if(!lastT) lastT=ts;
+  var dt=Math.min(0.05,(ts-lastT)/1000); lastT=ts;
+  drawFx(dt);
+  requestAnimationFrame(loop);
+}
+resize();
+requestAnimationFrame(loop);
+
+window.__dbg=function(){
+  return {mode:S.mode,slot:S.slot,spinning:S.spinning,results:S.results.length,
+    last:S.results.length?S.results[S.results.length-1].text:null,
+    denom:S.denom,btn:elMainBtn.textContent,
+    resultVisible:!document.querySelector("#scrResult").classList.contains("hide"),
+    rare:S.results.filter(function(r){return r.tier>=4}).length};
+};
+})();
+</script>
+<script src="../ads.js" defer></script>
+</body>
+</html>

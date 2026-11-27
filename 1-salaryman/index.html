@@ -1,0 +1,1213 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>サラリーマン、宇宙を壊す。｜スワイプ加速バカゲー</title>
+<meta name="description" content="上スワイプするたびに爆速加速。時速0.1kmの通勤から新幹線・音速・成層圏を突破し、光速で宇宙がバグって崩壊する。失敗なしのインフレバカゲー。">
+<meta property="og:type" content="website">
+<meta property="og:title" content="サラリーマン、宇宙を壊す。">
+<meta property="og:description" content="上スワイプで爆速加速。時速0.1kmの通勤から光速を突破し、宇宙がバグって崩壊する失敗なしのインフレバカゲー。">
+<meta property="og:site_name" content="サラリーマン、宇宙を壊す。">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="サラリーマン、宇宙を壊す。">
+<meta name="twitter:description" content="上スワイプで爆速加速。時速0.1kmの通勤から光速を突破し、宇宙がバグって崩壊する失敗なしのインフレバカゲー。">
+<meta name="theme-color" content="#05060f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="宇宙を壊す">
+<style>
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{
+    margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#05060f;color:#eaf4ff;
+    font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans JP",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;overscroll-behavior:none;
+  }
+  #stage{position:fixed;inset:0;overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
+  #cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;
+      -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-user-drag:none;}
+  .no-touch{pointer-events:none;}
+
+  /* ---------- HUD ---------- */
+  #hud{position:absolute;left:0;right:0;top:0;z-index:8;padding:calc(8px + env(safe-area-inset-top)) 14px 0;
+       display:flex;justify-content:space-between;align-items:flex-start;gap:10px;pointer-events:none;
+       transition:opacity .3s;}
+  #hud.off{opacity:0;}
+  .hlbl{font-size:9px;letter-spacing:.26em;color:#5d7ea8;font-weight:800;margin-bottom:2px;}
+  #speed{font-size:clamp(26px,9vw,40px);font-weight:900;line-height:1;font-variant-numeric:tabular-nums;
+         letter-spacing:-.01em;text-shadow:0 0 18px rgba(0,229,255,.6),0 0 46px rgba(0,229,255,.25);}
+  #speedUnit{font-size:10px;font-weight:800;color:#9ad9ff;letter-spacing:.06em;margin-top:3px;white-space:nowrap;max-width:150px;overflow:hidden;text-overflow:ellipsis;}
+  #stageName{font-size:12px;font-weight:900;color:#ffe23b;letter-spacing:.06em;text-shadow:0 0 14px rgba(255,226,59,.5);}
+  #stageSub{font-size:9px;font-weight:700;color:#8ba6c4;letter-spacing:.18em;}
+  .hr{text-align:right;}
+  #dist{font-size:15px;font-weight:900;font-variant-numeric:tabular-nums;color:#bfe6ff;}
+  #combo{font-size:11px;font-weight:900;color:#ff5ea8;margin-top:4px;min-height:14px;letter-spacing:.05em;
+         opacity:0;transition:opacity .2s;}
+  #combo.on{opacity:1;}
+
+  /* progress rail */
+  #rail{position:absolute;left:14px;right:14px;top:calc(74px + env(safe-area-inset-top));z-index:7;height:4px;
+        border-radius:99px;background:rgba(255,255,255,.09);overflow:hidden;pointer-events:none;transition:opacity .3s;}
+  #rail.off{opacity:0;}
+  #railFill{height:100%;width:0%;border-radius:99px;background:linear-gradient(90deg,#00e5ff,#7b5cff 55%,#ff2bd6);
+            box-shadow:0 0 12px #00e5ff;transition:width .12s linear;}
+
+  /* ---------- telop ---------- */
+  #telop{transition:opacity .4s;position:absolute;left:0;right:0;bottom:calc(8px + env(safe-area-inset-bottom));z-index:8;height:30px;
+         background:linear-gradient(90deg,rgba(190,0,30,.94),rgba(120,0,60,.9));border-top:1px solid rgba(255,255,255,.22);
+         border-bottom:1px solid rgba(255,255,255,.12);overflow:hidden;pointer-events:none;
+         box-shadow:0 -6px 24px rgba(255,0,80,.22);}
+  #telop .tag{position:absolute;left:0;top:0;bottom:0;display:flex;align-items:center;padding:0 8px;
+              background:#ff1f45;font-size:10px;font-weight:900;letter-spacing:.12em;z-index:2;
+              box-shadow:8px 0 14px rgba(0,0,0,.35);}
+  #telopTxt{position:absolute;white-space:nowrap;will-change:transform;font-size:12px;font-weight:800;
+            color:#fff;letter-spacing:.02em;top:50%;transform:translateY(-50%);padding-left:100%;}
+  @keyframes marquee{from{transform:translate(0,-50%)}to{transform:translate(-160%,-50%)}}
+  #telopTxt.run{animation:marquee 11s linear infinite;}
+
+  /* ---------- center banner ---------- */
+  #banner{position:absolute;left:0;right:0;top:38%;z-index:9;text-align:center;pointer-events:none;opacity:0;}
+  #banner .b1{font-size:clamp(20px,7.4vw,30px);font-weight:900;letter-spacing:.03em;
+              color:#fff;text-shadow:0 0 20px #00e5ff,0 0 50px #00a2ff;}
+  #banner .b2{font-size:12px;font-weight:900;color:#ffe23b;letter-spacing:.22em;margin-top:6px;}
+  #banner.show{animation:bannerPop 1.5s cubic-bezier(.2,.9,.2,1) forwards;}
+  @keyframes bannerPop{0%{opacity:0;transform:scale(.6) rotate(-3deg)}14%{opacity:1;transform:scale(1.08) rotate(1deg)}
+    30%{transform:scale(1) rotate(0)}78%{opacity:1}100%{opacity:0;transform:scale(1.05)}}
+
+  /* ---------- hint ---------- */
+  #hint{position:absolute;left:0;right:0;bottom:calc(58px + env(safe-area-inset-bottom));z-index:7;text-align:center;
+        font-size:12px;font-weight:800;color:rgba(220,240,255,.8);pointer-events:none;transition:opacity .4s;}
+  #hint .ar{font-size:20px;display:block;line-height:1;animation:bob 1s ease-in-out infinite;}
+  @keyframes bob{0%,100%{transform:translateY(0);opacity:.55}50%{transform:translateY(-6px);opacity:1}}
+
+  /* ---------- mute ---------- */
+  #mute{position:absolute;right:12px;bottom:calc(48px + env(safe-area-inset-bottom));z-index:12;width:38px;height:38px;
+        border-radius:12px;border:1px solid rgba(255,255,255,.18);background:rgba(8,14,26,.6);color:#bfe6ff;
+        font-size:16px;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px);
+        -webkit-backdrop-filter:blur(6px);touch-action:manipulation;cursor:pointer;}
+  #mute.off{color:#5b6a80;}
+
+  /* ---------- screens ---------- */
+  .screen{position:fixed;inset:0;z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;
+          text-align:center;padding:calc(26px + env(safe-area-inset-top)) 20px calc(26px + env(safe-area-inset-bottom));
+          transition:opacity .28s ease,visibility .28s;overflow-y:auto;overscroll-behavior:contain;}
+  .screen.hide{opacity:0;visibility:hidden;pointer-events:none;}
+  .screen::before{content:"";position:absolute;inset:0;z-index:-1;}
+  #scrTitle::before{background:
+      radial-gradient(circle at 50% 22%,rgba(0,140,255,.30),transparent 58%),
+      radial-gradient(circle at 18% 82%,rgba(255,0,140,.22),transparent 55%),
+      linear-gradient(180deg,rgba(5,6,15,.90),rgba(3,4,10,.985));}
+  .ttl-small{font-size:11px;font-weight:900;letter-spacing:.36em;color:#7fd7ff;margin-bottom:10px;
+             text-shadow:0 0 14px rgba(0,229,255,.6);}
+  .ttl{font-size:clamp(30px,11.6vw,46px);font-weight:900;line-height:1.06;letter-spacing:-.02em;
+       background:linear-gradient(180deg,#ffffff 20%,#8fe3ff 62%,#3aa9ff 100%);
+       -webkit-background-clip:text;background-clip:text;color:transparent;
+       filter:drop-shadow(0 4px 24px rgba(0,160,255,.55));}
+  .ttl-sub{margin-top:10px;font-size:13px;font-weight:800;color:#ffe23b;letter-spacing:.08em;}
+  .rule{margin:22px 0 4px;display:flex;flex-direction:column;gap:9px;width:100%;max-width:330px;
+        font-size:12.5px;font-weight:700;color:#b9cfe4;text-align:left;}
+  .rule div{display:flex;gap:9px;align-items:flex-start;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.08);
+            border-radius:11px;padding:9px 11px;}
+  .rule b{color:#fff;font-weight:900;}
+  .rule .em{color:#ffe23b;font-weight:900;}
+  .btn{margin-top:18px;width:100%;max-width:330px;min-height:58px;border:0;border-radius:18px;
+       font-family:inherit;font-size:17px;font-weight:900;letter-spacing:.04em;color:#04121e;cursor:pointer;
+       background:linear-gradient(135deg,#7ff4ff,#00d8ff 40%,#7b8dff);
+       box-shadow:0 10px 30px rgba(0,200,255,.42),inset 0 -3px 0 rgba(0,0,0,.18);
+       touch-action:manipulation;transition:transform .08s;display:flex;align-items:center;justify-content:center;gap:8px;}
+  .btn:active{transform:scale(.965);}
+  .btn.ghost{background:rgba(255,255,255,.07);color:#dbeaf7;border:1px solid rgba(255,255,255,.2);box-shadow:none;min-height:48px;font-size:14px;}
+  .btn.x{background:linear-gradient(135deg,#2b2d33,#0d0f13);color:#fff;border:1px solid rgba(255,255,255,.28);
+         box-shadow:0 8px 24px rgba(0,0,0,.5);}
+  .btn.x .xmark{font-weight:900;font-size:18px;}
+  .note{margin-top:12px;font-size:10.5px;color:#6c8299;letter-spacing:.06em;}
+  .best{margin-top:14px;font-size:11px;font-weight:800;color:#7fd7ff;letter-spacing:.08em;}
+
+  /* ---------- result ---------- */
+  #scrResult::before{background:
+      radial-gradient(circle at 50% 16%,rgba(255,60,160,.24),transparent 60%),
+      radial-gradient(circle at 80% 84%,rgba(0,180,255,.2),transparent 58%),
+      linear-gradient(180deg,rgba(8,4,18,.97),rgba(3,4,10,.995));}
+  .rs-head{font-size:10px;font-weight:900;letter-spacing:.34em;color:#ff73b9;margin-bottom:6px;}
+  .rs-speed{font-size:clamp(30px,10.5vw,42px);font-weight:900;font-variant-numeric:tabular-nums;line-height:1.05;
+            color:#fff;text-shadow:0 0 22px rgba(0,229,255,.7),0 0 60px rgba(0,140,255,.4);}
+  .rs-unit{font-size:11px;font-weight:800;color:#8fd6ff;letter-spacing:.16em;margin-top:4px;}
+  .rs-card{margin-top:16px;width:100%;max-width:340px;background:rgba(12,18,32,.78);border:1px solid rgba(120,200,255,.24);
+           border-radius:16px;padding:13px 15px;box-shadow:0 12px 34px rgba(0,0,0,.45);}
+  .rs-row{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:7px 0;border-bottom:1px dashed rgba(255,255,255,.09);}
+  .rs-row:last-child{border-bottom:0;}
+  .rs-k{font-size:11px;font-weight:800;color:#7f9ab5;letter-spacing:.06em;}
+  .rs-v{font-size:14px;font-weight:900;color:#fff;text-align:right;}
+  .rs-v.hi{color:#ffe23b;text-shadow:0 0 12px rgba(255,226,59,.45);}
+  .rank{font-size:17px;font-weight:900;color:#ff6cc0;text-shadow:0 0 16px rgba(255,60,170,.6);text-align:right;}
+  .rs-btns{margin-top:16px;width:100%;max-width:340px;display:flex;flex-direction:column;gap:9px;}
+  .rs-btns .btn{margin-top:0;max-width:none;}
+
+  /* glitch text overlay for collapse */
+  #errs{position:absolute;inset:0;z-index:6;pointer-events:none;overflow:hidden;}
+  .errbox{position:absolute;font-family:Menlo,Consolas,monospace;font-size:10px;line-height:1.35;
+          background:rgba(10,10,16,.86);border:1px solid rgba(255,70,120,.55);color:#ff9bc0;padding:5px 7px;
+          border-radius:3px;white-space:pre;box-shadow:0 0 18px rgba(255,0,80,.3);}
+</style>
+</head>
+<body>
+<div id="stage">
+  <canvas id="cv"></canvas>
+  <div id="errs"></div>
+
+  <div id="hud" class="off">
+    <div>
+      <div class="hlbl">CURRENT VELOCITY</div>
+      <div id="speed">0.1</div>
+      <div id="speedUnit">km/h</div>
+    </div>
+    <div class="hr">
+      <div class="hlbl">STAGE</div>
+      <div id="stageName">通勤ラッシュ</div>
+      <div id="stageSub">月曜 8:12</div>
+      <div id="dist"></div>
+      <div id="combo"></div>
+    </div>
+  </div>
+  <div id="rail" class="off"><div id="railFill"></div></div>
+
+  <div id="banner"><div class="b1"></div><div class="b2"></div></div>
+
+  <div id="hint" style="opacity:0">
+    <span class="ar">▲</span>
+    上スワイプで加速／連打OK
+  </div>
+
+  <div id="telop" style="opacity:0"><div class="tag">速報</div><div id="telopTxt">速報：月曜8時12分、都内の男性（26）が通勤中に加速を開始した模様。</div></div>
+
+  <div id="mute">🔊</div>
+
+  <div id="scrTitle" class="screen">
+    <div class="ttl-small">NO FAIL · INFINITE ACCELERATION</div>
+    <div class="ttl">サラリーマン、<br>宇宙を壊す。</div>
+    <div class="ttl-sub">時速0.1km → 光速 → 宇宙崩壊</div>
+    <div class="rule">
+      <div><span>1</span><span><b>上スワイプ</b>（または連打）で<span class="em">爆速加速</span>。連続入力でコンボ倍率アップ。</span></div>
+      <div><span>2</span><span>通勤 → 自転車 → 新幹線 → 音速 → 成層圏 → 宇宙 → <span class="em">光速突破</span>。</span></div>
+      <div><span>3</span><span>光速を超えたら、あとは<span class="em">宇宙を壊すだけ</span>。失敗なし。</span></div>
+    </div>
+    <button class="btn" id="startBtn">加速を開始する ▶</button>
+    <div class="best" id="bestTxt"></div>
+    <div class="note">音が出ます／イヤホン推奨</div>
+      <a class="pkl-arcade-link" href="../arcade/" style="display:inline-block;margin-top:12px;padding:7px 14px;border-radius:99px;border:1px solid rgba(140,210,255,.38);background:rgba(8,16,32,.55);color:#9fd8ff;font-size:11px;font-weight:700;letter-spacing:.04em;text-decoration:none;opacity:.8;pointer-events:auto;line-height:1.3;-webkit-tap-highlight-color:transparent;">🎮 他の脳汁ゲームも遊ぶ（全11本）</a>
+  </div>
+
+  <div id="scrResult" class="screen hide">
+    <div class="rs-head">FINAL VELOCITY</div>
+    <div class="rs-speed" id="rsSpeed">0</div>
+    <div class="rs-unit" id="rsSpeedUnit">km/h</div>
+    <div class="rs-card">
+      <div class="rs-row"><span class="rs-k">壊した宇宙ランク</span><span class="rank" id="rsRank">宇宙：無傷</span></div>
+      <div class="rs-row"><span class="rs-k">走行距離</span><span class="rs-v" id="rsMax">-</span></div>
+      <div class="rs-row"><span class="rs-k">スワイプ／タップ</span><span class="rs-v" id="rsTaps">0 回</span></div>
+      <div class="rs-row"><span class="rs-k">宇宙に与えた損害</span><span class="rs-v hi" id="rsDmg">0 %</span></div>
+      <div class="rs-row"><span class="rs-k">称号</span><span class="rs-v" id="rsTitle">-</span></div>
+    </div>
+    <div class="rs-btns">
+      <button class="btn x" id="shareBtn"><span class="xmark">𝕏</span> 結果をシェア</button>
+      <button class="btn ghost" id="retryBtn">もう一度、出社する（リトライ）</button>
+    </div>
+    <div class="best" id="bestTxt2"></div>
+      <a class="pkl-arcade-link" href="../arcade/" style="display:inline-block;margin-top:12px;padding:7px 14px;border-radius:99px;border:1px solid rgba(140,210,255,.38);background:rgba(8,16,32,.55);color:#9fd8ff;font-size:11px;font-weight:700;letter-spacing:.04em;text-decoration:none;opacity:.8;pointer-events:auto;line-height:1.3;-webkit-tap-highlight-color:transparent;">🎮 他の脳汁ゲームも遊ぶ（全11本）</a>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+/* =========================================================
+   utils
+   ========================================================= */
+var $ = function(s){ return document.querySelector(s); };
+function clamp(v,a,b){ return v<a?a:(v>b?b:v); }
+function rnd(a,b){ return a + Math.random()*(b-a); }
+function ri(a,b){ return Math.floor(rnd(a,b+1)); }
+function fmt(n){
+  if (n>=1e12) return (n/1e12).toFixed(2)+"兆";
+  if (n>=1e8)  return (n/1e8).toFixed(2)+"億";
+  if (n>=1e4)  return (n/1e4).toFixed(1)+"万";
+  if (n>=100)  return Math.round(n).toLocaleString("ja-JP");
+  return (n<10 ? n.toFixed(1) : Math.round(n).toLocaleString("ja-JP"));
+}
+var LS_BEST="sal_universe_best_v1", LS_MUTE="sal_universe_mute_v1";
+function fmtKm(n){
+  if (n>=1e8) return (n/1e8).toFixed(2)+"億km";
+  if (n>=1e4) return (n/1e4).toFixed(1)+"万km";
+  return Math.round(n).toLocaleString("ja-JP")+"km";
+}
+
+/* =========================================================
+   audio (Web Audio synth / no files)
+   ========================================================= */
+var AU={ctx:null,master:null,muted:false};
+try{ AU.muted = localStorage.getItem(LS_MUTE)==="1"; }catch(e){}
+function audioInit(){
+  if (AU.ctx) return;
+  var AC = window.AudioContext || window.webkitAudioContext;
+  if (!AC) return;
+  try{
+    AU.ctx = new AC();
+    AU.master = AU.ctx.createGain();
+    AU.master.gain.value = AU.muted ? 0 : 0.55;
+    AU.master.connect(AU.ctx.destination);
+  }catch(e){ AU.ctx=null; }
+}
+function audioResume(){
+  audioInit();
+  if (AU.ctx && AU.ctx.state==="suspended"){ try{ AU.ctx.resume(); }catch(e){} }
+}
+function now(){ return AU.ctx ? AU.ctx.currentTime : 0; }
+function tone(o){
+  if(!AU.ctx || AU.muted) return;
+  var t0 = now() + (o.delay||0);
+  var osc = AU.ctx.createOscillator();
+  var g = AU.ctx.createGain();
+  osc.type = o.type||"sine";
+  osc.frequency.setValueAtTime(Math.max(20,o.f||440), t0);
+  if (o.to){
+    if (o.lin) osc.frequency.linearRampToValueAtTime(Math.max(20,o.to), t0+(o.dur||0.2));
+    else osc.frequency.exponentialRampToValueAtTime(Math.max(20,o.to), t0+(o.dur||0.2));
+  }
+  var v = (o.v==null?0.18:o.v);
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.exponentialRampToValueAtTime(v, t0+0.012);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0+(o.dur||0.2));
+  osc.connect(g); g.connect(AU.master);
+  osc.start(t0); osc.stop(t0+(o.dur||0.2)+0.05);
+}
+function noiseBurst(o){
+  if(!AU.ctx || AU.muted) return;
+  var dur = o.dur||0.3, t0 = now()+(o.delay||0);
+  var len = Math.floor(AU.ctx.sampleRate*dur);
+  var buf = AU.ctx.createBuffer(1,len,AU.ctx.sampleRate);
+  var d = buf.getChannelData(0);
+  for(var i=0;i<len;i++){ d[i] = (Math.random()*2-1) * Math.pow(1-i/len, o.pow||2); }
+  var src = AU.ctx.createBufferSource(); src.buffer = buf;
+  var f = AU.ctx.createBiquadFilter();
+  f.type = o.type||"lowpass";
+  f.frequency.setValueAtTime(o.f||1200, t0);
+  if (o.fTo) f.frequency.exponentialRampToValueAtTime(Math.max(60,o.fTo), t0+dur);
+  var g = AU.ctx.createGain();
+  g.gain.setValueAtTime(o.v==null?0.25:o.v, t0);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0+dur);
+  src.connect(f); f.connect(g); g.connect(AU.master);
+  src.start(t0); src.stop(t0+dur+0.02);
+}
+function sfxBoost(power){
+  tone({type:"square", f:300+power*520, to:150+power*260, dur:0.09, v:0.10});
+  noiseBurst({dur:0.14, f:2400+power*1400, fTo:600, type:"bandpass", v:0.10});
+}
+function sfxStageUp(){
+  tone({type:"sawtooth", f:220, to:880, dur:0.20, v:0.13});
+  tone({type:"square", f:880, to:1760, dur:0.16, v:0.09, delay:0.10});
+  noiseBurst({dur:0.32, f:900, fTo:6000, type:"highpass", v:0.10});
+}
+function sfxLightSpeed(){
+  tone({type:"sine", f:120, to:2400, dur:0.55, v:0.20});
+  tone({type:"triangle", f:240, to:4800, dur:0.5, v:0.10, delay:0.05});
+  noiseBurst({dur:0.9, f:400, fTo:9000, type:"highpass", v:0.18, pow:1.4});
+}
+function sfxBoom(big){
+  noiseBurst({dur:big?1.5:0.6, f:big?900:1400, fTo:60, type:"lowpass", v:big?0.5:0.3, pow:1.2});
+  tone({type:"sine", f:big?90:140, to:30, dur:big?1.1:0.5, v:big?0.32:0.2});
+  if(big){
+    for(var i=0;i<5;i++){
+      tone({type:"square", f:rnd(400,1800), to:rnd(60,300), dur:0.22, v:0.07, delay:0.05+i*0.11});
+    }
+  }
+}
+function sfxGlitch(){
+  for(var i=0;i<4;i++){
+    tone({type:"square", f:rnd(80,2400), to:rnd(80,900), dur:0.06, v:0.06, delay:i*0.05});
+  }
+  noiseBurst({dur:0.3, f:5000, fTo:500, type:"bandpass", v:0.12});
+}
+
+/* =========================================================
+   canvas
+   ========================================================= */
+var cv = $("#cv"), ctx = cv.getContext("2d");
+var W=360,H=640,DPR=1;
+function resize(){
+  DPR = Math.min(2, window.devicePixelRatio||1);
+  W = cv.clientWidth || window.innerWidth;
+  H = cv.clientHeight || window.innerHeight;
+  cv.width = Math.round(W*DPR); cv.height = Math.round(H*DPR);
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  buildStars();
+}
+window.addEventListener("resize", resize);
+window.addEventListener("orientationchange", function(){ setTimeout(resize,120); });
+
+/* =========================================================
+   config
+   ========================================================= */
+var LS = 1079252849; // km/h
+var STAGES = [
+  {p:0.000, name:"通勤ラッシュ",  sub:"月曜 8:12",        banner:"通勤開始",            b2:"時速0.1km",     theme:0},
+  {p:0.075, name:"早歩き",        sub:"遅刻まで3分",      banner:"早歩き",              b2:"時速6km",       theme:0},
+  {p:0.170, name:"ママチャリ",    sub:"前カゴに傘",        banner:"自転車を抜いた",      b2:"時速20km",      theme:0},
+  {p:0.300, name:"新幹線",        sub:"のぞみ級",          banner:"新幹線と並走",        b2:"時速320km",     theme:2},
+  {p:0.440, name:"音速",          sub:"ソニック",          banner:"音の壁を突破",        b2:"時速1,224km",   theme:3},
+  {p:0.570, name:"ジェット機",    sub:"成層圏",            banner:"成層圏に到達",        b2:"時速12,000km",  theme:4},
+  {p:0.700, name:"人工衛星",      sub:"宇宙",              banner:"大気圏を離脱",        b2:"時速40,000km",  theme:5},
+  {p:0.840, name:"亜光速",        sub:"相対論域",          banner:"時間が歪みはじめた",  b2:"時速1,000,000km",theme:6},
+  {p:0.950, name:"光速",          sub:"物理法則崩壊",      banner:"光速に到達",          b2:"時速1,079,252,849km", theme:7}
+];
+var COLLAPSE_RANKS = [
+  {n:0,  name:"宇宙：ひび割れ注意報", title:"注意報レベルの男",       dmg:12},
+  {n:2,  name:"銀河：崩壊寸前",       title:"銀河の治安維持違反",     dmg:34},
+  {n:4,  name:"宇宙：崩壊",           title:"宇宙の終わらせ屋",       dmg:61},
+  {n:7,  name:"宇宙：完全崩壊",       title:"物理法則の脱税者",       dmg:88},
+  {n:10, name:"多元宇宙：終焉",       title:"次元の不法投棄",         dmg:100}
+];
+var HEADLINES = [
+  "速報：月曜8時12分、都内の男性（26）が通勤中に加速を開始した模様。",
+  "速報：男性、自転車を追い抜く。「遅刻しそうだった」と供述。",
+  "速報：JR在来線と並走する男性を乗客が目撃。「窓の外に人がいた」",
+  "速報：新幹線のぞみ、男性に追い抜かれる。JR「検証中」。",
+  "速報：音速を突破。近隣住民「窓が割れた」との通報相次ぐ。",
+  "専門家「人間が音速で走るのは理論上ありえない」→ 既に走っている。",
+  "速報：成層圏にサラリーマンらしき物体。気象庁「観測例なし」。",
+  "政府「落ち着いてください。これは通勤です」",
+  "速報：大気圏を離脱。ネクタイが軌道上で確認される。",
+  "宇宙飛行士「こちらからも見える。すごい速さだ」",
+  "速報：男性、光速に到達。アインシュタイン氏の代理人「ノーコメント」。",
+  "物理学者「質量が無限大になるはずなんですが、スーツケースは軽そうです」",
+  "速報：宇宙にひび割れ。原因は「通勤の勢い」とみられる。",
+  "緊急：宇宙の端に「Error 404」の表示。",
+  "速報：男性、謝罪会見を開かずに宇宙を壊し続けている。",
+  "専門家「もう止められない」→ 本人「今日は会議があるので」"
+];
+
+/* =========================================================
+   state
+   ========================================================= */
+var S = {
+  mode:"title",      // title | play | collapse | result
+  p:0,               // progress 0..1
+  dispSpeed:0.1,
+  maxSpeed:0.1,
+  boosts:0,
+  swipeN:0,
+  tapN:0,
+  combo:0,
+  comboT:0,
+  lastInput:0,
+  stage:0,
+  integrity:100,
+  dmgPct:0,
+  collapseT:0,
+  t:0,
+  dist:0,
+  shake:0,
+  flash:0,
+  hue:0,
+  over:1,            // overspeed multiplier after light speed
+  bannerT:0,
+  headIdx:0,
+  debris:[],
+  parts:[],
+  stars:[],
+  errBoxes:[],
+  salaryY:0,
+  runPhase:0,
+  endTimer:0,
+  hitStop:0
+};
+
+function buildStars(){
+  S.stars.length = 0;
+  var n = Math.floor(W*H/9000);
+  for (var i=0;i<n;i++){
+    S.stars.push({x:Math.random()*W, y:Math.random()*H, z:rnd(0.25,1), s:rnd(0.6,2.1)});
+  }
+}
+
+/* =========================================================
+   speed model
+   ========================================================= */
+function displaySpeed(p){
+  if (p<=0) return 0.1;
+  // exponential interpolation across stage anchors
+  var pts = [[0,0.1],[0.075,6],[0.17,20],[0.30,320],[0.44,1224],[0.57,12000],[0.70,40000],[0.84,1000000],[0.95,LS],[1.0,LS]];
+  for (var i=1;i<pts.length;i++){
+    if (p<=pts[i][0]){
+      var a=pts[i-1], b=pts[i];
+      var t=(p-a[0])/(b[0]-a[0]);
+      return Math.exp(Math.log(a[1]) + (Math.log(b[1])-Math.log(a[1]))*t);
+    }
+  }
+  return LS;
+}
+function stageIndex(p){
+  var idx=0;
+  for (var i=0;i<STAGES.length;i++){ if (p>=STAGES[i].p) idx=i; }
+  return idx;
+}
+
+/* =========================================================
+   HUD
+   ========================================================= */
+var elSpeed=$("#speed"), elUnit=$("#speedUnit"), elStage=$("#stageName"), elSub=$("#stageSub"),
+    elDist=$("#dist"), elCombo=$("#combo"), elRail=$("#railFill"), elHud=$("#hud"), elRailWrap=$("#rail"),
+    elBanner=$("#banner"), elTelopTxt=$("#telopTxt"), elHint=$("#hint"), elMute=$("#mute"), elErrs=$("#errs");
+
+function hudUpdate(){
+  var sp;
+  if (S.mode==="collapse" || (S.mode==="result")){
+    sp = S.maxSpeed;
+  } else {
+    sp = S.mode==="title" ? 0.1 : displaySpeed(S.p);
+  }
+  if (S.p>0.95) sp = LS * (1 + Math.max(0,(S.p-0.95))*8 + (S.mode==="collapse"? (S.dmgPct/100)*2.4 : 0));
+  if (sp > S.maxSpeed) S.maxSpeed = sp;
+  S.dispSpeed = sp;
+
+  if (sp >= LS*1.02){
+    elSpeed.textContent = (sp/LS).toFixed(2) + "倍";
+    elUnit.textContent = "光速基準 ／ 時速" + fmtKm(sp);
+  } else if (sp >= 1e6){
+    elSpeed.textContent = fmt(sp);
+    elUnit.textContent = "km/h ／光速の " + (sp/LS*100).toFixed(2) + "%";
+  } else {
+    elSpeed.textContent = sp >= 100 ? Math.round(sp).toLocaleString("ja-JP") : sp.toFixed(1);
+    elUnit.textContent = "km/h";
+  }
+  var idx = stageIndex(S.p);
+  if (idx!==S.stage){
+    S.stage = idx;
+    var st = STAGES[idx];
+    elStage.textContent = st.name;
+    elSub.textContent = st.sub;
+    showBanner(st.banner, st.b2);
+    sfxStageUp();
+    pushHeadline();
+    burst(stageColors(idx).main, 26);
+  }
+  if (S.mode==="collapse"){
+    elStage.textContent = "光速突破";
+    elSub.textContent = "宇宙 崩壊中";
+  }
+  elDist.textContent = "走行 " + fmt(S.dist) + " km";
+  if (S.combo>=2 && S.mode==="play" && performance.now()-S.lastInput<900){
+    elCombo.textContent = "COMBO ×" + S.combo.toFixed(1);
+    elCombo.classList.add("on");
+  } else {
+    elCombo.classList.remove("on");
+  }
+  var pr = clamp(S.p/0.95,0,1);
+  elRail.style.width = (pr*100).toFixed(1) + "%";
+}
+function showBanner(t1,t2){
+  elBanner.querySelector(".b1").textContent = t1;
+  elBanner.querySelector(".b2").textContent = t2;
+  elBanner.classList.remove("show");
+  void elBanner.offsetWidth;
+  elBanner.classList.add("show");
+}
+function pushHeadline(force){
+  var h;
+  if (force) h = force;
+  else { h = HEADLINES[Math.min(S.headIdx, HEADLINES.length-1)]; S.headIdx++; }
+  elTelopTxt.textContent = String(h).replace(/^【?速報】?[:：]?\s*/,"");
+  elTelopTxt.classList.remove("run");
+  void elTelopTxt.offsetWidth;
+  elTelopTxt.classList.add("run");
+}
+
+/* =========================================================
+   particles
+   ========================================================= */
+function burst(color,n){
+  for (var i=0;i<n;i++){
+    S.parts.push({
+      x: rnd(W*0.2,W*0.95), y: rnd(H*0.2,H*0.8),
+      vx: rnd(-260,-40), vy: rnd(-120,120),
+      life: rnd(0.35,1.0), max:1, size: rnd(1.5,5),
+      color: color, kind:"spark"
+    });
+  }
+}
+function debrisSpawn(n){
+  for (var i=0;i<n;i++){
+    var side = Math.random()<0.7 ? 1 : -1;
+    S.debris.push({
+      x: rnd(0,W), y: rnd(0,H*0.9),
+      vx: rnd(-1,1)*rnd(40,320)*side,
+      vy: rnd(-1,1)*rnd(40,260),
+      rot: rnd(0,6.28), vr: rnd(-4,4),
+      size: rnd(8,34), life: rnd(2.5,7), max:7,
+      hue: rnd(0,360),
+      shape: ri(0,2),
+      glow: Math.random()<0.35
+    });
+  }
+}
+function stepParts(dt){
+  for (var i=S.parts.length-1;i>=0;i--){
+    var p=S.parts[i];
+    p.x += p.vx*dt; p.y += p.vy*dt;
+    p.vx *= (1-2.2*dt); p.vy *= (1-2.2*dt);
+    p.life -= dt;
+    if (p.life<=0) S.parts.splice(i,1);
+  }
+  for (var j=S.debris.length-1;j>=0;j--){
+    var d=S.debris[j];
+    d.x += d.vx*dt; d.y += d.vy*dt;
+    d.rot += d.vr*dt;
+    d.vx *= (1-0.35*dt); d.vy *= (1-0.35*dt);
+    d.life -= dt;
+    if (d.life<=0 || d.x<-120 || d.x>W+120 || d.y>H+160) S.debris.splice(j,1);
+  }
+}
+
+/* =========================================================
+   themes
+   ========================================================= */
+function stageColors(idx){
+  var t=[
+    {sky:["#0a1526","#16324f","#2a5d86"], main:"#4fd2ff", ground:"#101a28"}, // city morning
+    {sky:["#0a1526","#16324f","#2a5d86"], main:"#4fd2ff", ground:"#101a28"},
+    {sky:["#071426","#123a5c","#1c6f8f"], main:"#39e6ff", ground:"#0b1520"},
+    {sky:["#050f22","#0d2b57","#1b4b8f"], main:"#6fa8ff", ground:"#080f1c"},
+    {sky:["#020a1a","#08214a","#0e3d78"], main:"#8fc7ff", ground:"#06101f"},
+    {sky:["#01050f","#040b22","#0a1a42"], main:"#a88bff", ground:"#03060f"},
+    {sky:["#01030a","#05051c","#100a34"], main:"#c46bff", ground:"#02030a"},
+    {sky:["#05000c","#12002a","#2a0048"], main:"#ff5ecb", ground:"#04000a"}
+  ];
+  return t[Math.min(idx,t.length-1)];
+}
+
+/* =========================================================
+   background rendering
+   ========================================================= */
+var bgOff = 0;
+function drawSky(th){
+  var g = ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0, th.sky[0]); g.addColorStop(0.55, th.sky[1]); g.addColorStop(1, th.sky[2]);
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+}
+
+function drawCity(scroll, theme, dark){
+  var horizon = H*0.70;
+  var layers = [
+    {sp:0.18, h:0.30, a:dark?0.30:0.42, col:"#08131f"},
+    {sp:0.34, h:0.24, a:dark?0.45:0.62, col:"#0d2135"},
+    {sp:0.55, h:0.16, a:dark?0.7:0.88,  col:"#132f47"}
+  ];
+  for (var L=0;L<layers.length;L++){
+    var lay=layers[L], off=(scroll*lay.sp)%140;
+    ctx.globalAlpha=lay.a;
+    ctx.fillStyle=lay.col;
+    for (var i=-1;i<W/140+2;i++){
+      var x=i*140-off;
+      var seed=(Math.floor((scroll*lay.sp)/140)+i)*37;
+      var hh = horizon - (H*lay.h*(0.5+((Math.sin(seed)*0.5+0.5)*0.7)));
+      ctx.fillRect(x, hh, 110, horizon-hh);
+      // windows
+      ctx.globalAlpha=lay.a*0.55;
+      ctx.fillStyle = theme>0 ? "#63e2ff" : "#ffd98a";
+      for (var wy=hh+8; wy<horizon-8; wy+=14){
+        for (var wx=x+8; wx<x+100; wx+=16){
+          var s2 = Math.sin(wx*0.7+wy*1.3+seed);
+          if (s2>0.1) ctx.fillRect(wx,wy,6,7);
+        }
+      }
+      ctx.globalAlpha=lay.a;
+      ctx.fillStyle=lay.col;
+    }
+  }
+  ctx.globalAlpha=1;
+}
+
+function drawRails(scroll){
+  var horizon=H*0.70;
+  ctx.strokeStyle="rgba(120,180,255,.35)"; ctx.lineWidth=2;
+  for (var i=0;i<3;i++){
+    ctx.beginPath(); ctx.moveTo(0,horizon+i*10); ctx.lineTo(W,horizon+i*10); ctx.stroke();
+  }
+  var off=(scroll*0.9)%90;
+  ctx.fillStyle="rgba(140,200,255,.22)";
+  for (var x=-90;x<W+90;x+=90){
+    ctx.fillRect(x-off, horizon-52, 4, 60);
+    ctx.fillRect(x-off-8, horizon-56, 20, 5);
+  }
+  // sleeper
+  ctx.fillStyle="rgba(90,140,200,.2)";
+  var off2=(scroll*1.4)%34;
+  for (var y=horizon; y<H; y+=34){
+    ctx.fillRect(0, y-((off2+34)%34), W, 3);
+  }
+}
+
+function drawClouds(scroll){
+  var off=(scroll*0.5)%(W+300);
+  for (var i=0;i<5;i++){
+    var x=((i*260 - off)%(W+300)+W+300)%(W+300)-150;
+    var y=H*(0.18+i*0.13);
+    var r=40+i*11;
+    var g=ctx.createRadialGradient(x,y,0,x,y,r*2);
+    g.addColorStop(0,"rgba(200,235,255,.30)");
+    g.addColorStop(1,"rgba(160,210,255,0)");
+    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(x,y,r*2,0,6.2832); ctx.fill();
+  }
+}
+function drawStars(speedRatio, theme){
+  ctx.save();
+  for (var i=0;i<S.stars.length;i++){
+    var s=S.stars[i];
+    var x = (s.x - bgOff*s.z*(0.4+speedRatio*7)) % (W+20);
+    if (x<0) x+=W+20;
+    var y = s.y;
+    ctx.globalAlpha = 0.35 + s.z*0.65;
+    ctx.fillStyle = theme>=6 ? (i%7===0?"#ff8cd8":(i%5===0?"#9fe6ff":"#ffffff")) : "#dff4ff";
+    ctx.fillRect(x,y,s.s,s.s*(1+speedRatio*3));
+  }
+  ctx.restore();
+}
+function drawPlanet(theme){
+  if (theme<5) return;
+  var t=S.t;
+  var px=W*0.82 + Math.sin(t*0.1)*10, py=H*0.30;
+  var r = theme>=7? 96 : 64;
+  var g=ctx.createRadialGradient(px-r*0.35,py-r*0.4,r*0.15,px,py,r);
+  if (theme>=7){ g.addColorStop(0,"#ffd7f4"); g.addColorStop(0.45,"#b04bff"); g.addColorStop(1,"#2a0046"); }
+  else { g.addColorStop(0,"#bfe9ff"); g.addColorStop(0.5,"#3a7bd5"); g.addColorStop(1,"#0a1a40"); }
+  ctx.globalAlpha=0.9;
+  ctx.fillStyle=g; ctx.beginPath(); ctx.arc(px,py,r,0,6.2832); ctx.fill();
+  ctx.globalAlpha=1;
+  if (theme>=7){
+    ctx.strokeStyle="rgba(255,140,230,.55)"; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.ellipse(px,py,r*1.5,r*0.35,-0.4,0,6.2832); ctx.stroke();
+  }
+}
+
+function drawSpeedLines(intensity){
+  if (intensity<=0.01) return;
+  ctx.save();
+  ctx.strokeStyle="rgba(190,235,255,"+(0.10+intensity*0.35)+")";
+  ctx.lineWidth=1;
+  var n=Math.floor(10+intensity*40);
+  for (var i=0;i<n;i++){
+    var seed=(i*97)%1000;
+    var y=((seed*7.31)%H);
+    var len=20+((seed*13)%160)*(0.4+intensity*2);
+    var x=((seed*17 - S.t*(600+intensity*2600))%(W+300)+W+300)%(W+300)-150;
+    ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x+len,y); ctx.stroke();
+  }
+  ctx.restore();
+}
+
+/* =========================================================
+   salaryman
+   ========================================================= */
+function drawSalaryman(x,y,scale,phase,speedRatio){
+  var s=scale;
+  ctx.save();
+  ctx.translate(x,y);
+  // trail
+  if (speedRatio>0.25){
+    for (var i=1;i<=4;i++){
+      ctx.globalAlpha=0.16/speedRatio*(0.5);
+      drawBody(-i*14*speedRatio*2.2, 0, s, phase-i*0.35, "#2b6fa8");
+    }
+    ctx.globalAlpha=1;
+  }
+  drawBody(0,0,s,phase,"#12365a");
+  ctx.restore();
+
+  function drawBody(ox,oy,sc,ph,bodyCol){
+    ctx.save();
+    ctx.translate(ox,oy);
+    ctx.scale(sc,sc);
+    var legA=Math.sin(ph)*0.9, legB=Math.sin(ph+Math.PI)*0.9;
+    var bob=Math.abs(Math.sin(ph))*3;
+    // shadow
+    ctx.fillStyle="rgba(0,0,0,.35)";
+    ctx.beginPath(); ctx.ellipse(0, 34, 24, 6, 0,0,6.2832); ctx.fill();
+    ctx.translate(0,-bob);
+    // briefcase (back arm)
+    ctx.save();
+    ctx.rotate(legB*0.2);
+    ctx.fillStyle="#1b1410";
+    ctx.fillRect(-26, -2, 18, 14);
+    ctx.strokeStyle="#c9a227"; ctx.lineWidth=1.5;
+    ctx.strokeRect(-26,-2,18,14);
+    ctx.restore();
+    // legs
+    ctx.strokeStyle="#1d2a3d"; ctx.lineWidth=7; ctx.lineCap="round";
+    ctx.beginPath(); ctx.moveTo(-2,10); ctx.lineTo(-2+Math.sin(legA)*18, 10+Math.cos(legA)*22); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(4,10); ctx.lineTo(4+Math.sin(legB)*18, 10+Math.cos(legB)*22); ctx.stroke();
+    // shoes
+    ctx.strokeStyle="#0a0f18"; ctx.lineWidth=6;
+    ctx.beginPath(); ctx.moveTo(-2+Math.sin(legA)*18,10+Math.cos(legA)*22);
+    ctx.lineTo(-2+Math.sin(legA)*18+7,10+Math.cos(legA)*22+3); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(4+Math.sin(legB)*18,10+Math.cos(legB)*22);
+    ctx.lineTo(4+Math.sin(legB)*18+7,10+Math.cos(legB)*22+3); ctx.stroke();
+    // torso
+    ctx.fillStyle=bodyCol;
+    roundRect(-12,-30,26,44,7); ctx.fill();
+    // shirt + tie
+    ctx.fillStyle="#f2f7ff";
+    ctx.beginPath(); ctx.moveTo(-2,-30); ctx.lineTo(8,-30); ctx.lineTo(4,-8); ctx.lineTo(-1,-8); ctx.closePath(); ctx.fill();
+    ctx.fillStyle="#ff2b4d";
+    ctx.beginPath(); ctx.moveTo(2,-26); ctx.lineTo(7,-26); ctx.lineTo(5,-10); ctx.lineTo(3,-10); ctx.closePath(); ctx.fill();
+    // arm swinging
+    ctx.strokeStyle=bodyCol; ctx.lineWidth=6; ctx.lineCap="round";
+    ctx.beginPath(); ctx.moveTo(6,-24);
+    ctx.lineTo(6+Math.sin(legB)*14, -24+Math.cos(legB)*14); ctx.stroke();
+    // head
+    ctx.fillStyle="#f6c9a0";
+    ctx.beginPath(); ctx.arc(4,-42,10,0,6.2832); ctx.fill();
+    // hair
+    ctx.fillStyle="#141018";
+    ctx.beginPath(); ctx.arc(4,-45,10.2,Math.PI*1.05,Math.PI*2.05); ctx.fill();
+    // face
+    ctx.fillStyle="#20242c";
+    ctx.fillRect(8,-44,1.8,2.4);
+    ctx.strokeStyle="#b06f52"; ctx.lineWidth=1.2;
+    ctx.beginPath(); ctx.moveTo(8,-38); ctx.lineTo(11,-38); ctx.stroke();
+    // sweat / determination lines
+    ctx.strokeStyle="rgba(120,210,255,.85)"; ctx.lineWidth=1.4;
+    ctx.beginPath(); ctx.moveTo(-16,-34); ctx.lineTo(-24,-34); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-17,-29); ctx.lineTo(-27,-29); ctx.stroke();
+    ctx.restore();
+  }
+  function roundRect(x,y,w,h,r){
+    ctx.beginPath();
+    ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
+    ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath();
+  }
+}
+
+/* =========================================================
+   render
+   ========================================================= */
+function render(dt){
+  var idx = stageIndex(S.p);
+  var th = stageColors(idx);
+  var speedRatio = clamp(S.dispSpeed/ (LS*0.5), 0, 1);
+  if (S.mode==="collapse") speedRatio = 1;
+
+  ctx.save();
+  if (S.shake>0.01){
+    var sx=(Math.random()-0.5)*S.shake, sy=(Math.random()-0.5)*S.shake;
+    ctx.translate(sx,sy);
+  }
+
+  drawSky(th);
+
+  bgOff += (60 + speedRatio*5200) * dt;
+
+  if (idx>=5) drawStars(speedRatio, idx);
+  if (idx>=6) drawPlanet(idx);
+  if (idx===2 || idx===3) { drawClouds(bgOff); drawRails(bgOff); }
+  else if (idx<4){ drawCity(bgOff, idx, false); }
+  else { drawClouds(bgOff); }
+
+  drawSpeedLines(speedRatio);
+
+  // ground for early stages
+  if (idx<4){
+    var gy=H*0.70;
+    ctx.fillStyle="rgba(8,16,28,.85)"; ctx.fillRect(0,gy,W,H-gy);
+    ctx.fillStyle="rgba(90,160,220,.18)";
+    var off=(bgOff*1.6)%60;
+    for (var gx=-60; gx<W+60; gx+=60){ ctx.fillRect(gx-off, gy+16, 34, 2); }
+  }
+
+  // salaryman placement
+  var manX = W*0.26;
+  var manY = H*0.66;
+  S.runPhase += dt*(9 + speedRatio*46);
+  var scale = 1.15;
+  drawSalaryman(manX, manY, scale, S.runPhase, speedRatio);
+
+  // particles
+  for (var i=0;i<S.parts.length;i++){
+    var p=S.parts[i];
+    ctx.globalAlpha = clamp(p.life/0.6,0,1);
+    ctx.fillStyle=p.color;
+    ctx.fillRect(p.x,p.y,p.size,p.size*(1+speedRatio*2));
+  }
+  ctx.globalAlpha=1;
+
+  // debris
+  for (var j=0;j<S.debris.length;j++){
+    var d=S.debris[j];
+    ctx.save();
+    ctx.translate(d.x,d.y); ctx.rotate(d.rot);
+    ctx.globalAlpha=clamp(d.life/2,0,1);
+    ctx.fillStyle = d.glow ? "hsl("+d.hue+",100%,72%)" : "hsl("+d.hue+",70%,48%)";
+    if (d.glow){ ctx.shadowColor="hsl("+d.hue+",100%,70%)"; ctx.shadowBlur=14; }
+    if (d.shape===0){ ctx.fillRect(-d.size/2,-d.size/2,d.size,d.size); }
+    else if (d.shape===1){ ctx.beginPath(); ctx.moveTo(0,-d.size/2); ctx.lineTo(d.size/2,d.size/2); ctx.lineTo(-d.size/2,d.size/2); ctx.closePath(); ctx.fill(); }
+    else { ctx.beginPath(); ctx.arc(0,0,d.size*0.45,0,6.2832); ctx.fill(); }
+    ctx.restore();
+  }
+  ctx.globalAlpha=1;
+
+  ctx.restore();
+
+  // glitch overlay
+  if (S.mode==="collapse"){
+    var g = S.collapseT;
+    if (Math.random()<0.35+g*0.03){
+      glitchDraw();
+    }
+    // scanlines
+    ctx.globalAlpha=0.16;
+    ctx.fillStyle="#000";
+    for (var sy=0; sy<H; sy+=4) ctx.fillRect(0,sy,W,1.4);
+    ctx.globalAlpha=1;
+  }
+
+  // white flash
+  if (S.flash>0.01){
+    ctx.fillStyle="rgba(255,255,255,"+clamp(S.flash,0,1)+")";
+    ctx.fillRect(0,0,W,H);
+  }
+}
+
+function glitchDraw(){
+  try{
+    var n=ri(2,7);
+    for (var i=0;i<n;i++){
+      var sy=Math.random()*H, sh=ri(6,42);
+      var dx=rnd(-38,38);
+      ctx.drawImage(cv, 0, sy*DPR, cv.width, sh*DPR, dx, sy, W, sh);
+    }
+    ctx.globalCompositeOperation="screen";
+    ctx.fillStyle="rgba(255,0,90,.09)"; ctx.fillRect(rnd(-20,20),0,W,ri(20,90));
+    ctx.fillStyle="rgba(0,230,255,.09)"; ctx.fillRect(rnd(-20,20),0,W,ri(20,90));
+    ctx.globalCompositeOperation="source-over";
+  }catch(e){}
+}
+
+/* =========================================================
+   input
+   ========================================================= */
+var touchSeen=false;
+var activeTouches={};
+function boost(kind, strength){
+  if (S.mode==="play"){
+    var base = kind==="swipe" ? 0.036*strength : 0.017;
+    var nowT = performance.now();
+    if (nowT - S.lastInput < 620) S.combo = Math.min(4.5, S.combo + (kind==="swipe"?0.30:0.16));
+    else S.combo = 1;
+    S.lastInput = nowT;
+    var mult = 1 + (S.combo-1)*0.28;
+    S.p = clamp(S.p + base*mult, 0, 1.001);
+    S.boosts++; if (kind==="swipe") S.swipeN++; else S.tapN++;
+    if (S.p>=1.0 && S.mode!=="collapse"){ enterCollapse(); }
+    if (S.p>0.012) elHint.style.opacity="0";
+    S.shake = Math.max(S.shake, kind==="swipe"?5:2.6);
+    sfxBoost(clamp(S.p,0,1));
+    burst("rgba(120,230,255,0.9)", kind==="swipe"?6:3);
+    S.flash = Math.max(S.flash, kind==="swipe"?0.10:0.045);
+  } else if (S.mode==="collapse"){
+    S.boosts++; S.swipeN += kind==="swipe"?1:0; S.tapN += kind==="swipe"?0:1;
+    var dmg = kind==="swipe" ? 13 : 7;
+    S.dmgPct = clamp(S.dmgPct + dmg, 0, 100);
+    S.integrity = 100 - S.dmgPct;
+    S.shake = Math.max(S.shake, 9);
+    S.flash = Math.max(S.flash, 0.2);
+    sfxBoost(1);
+    debrisSpawn(kind==="swipe"?9:4);
+    burst("rgba(255,120,220,.9)", 10);
+    pushHeadline();
+    if (S.integrity<=0 && S.endTimer<=0){ S.endTimer = 0.5; sfxBoom(true); S.flash=1; debrisSpawn(40); }
+  }
+}
+
+function enterCollapse(){
+  S.mode="collapse";
+  S.p=1.0;
+  S.collapseT=0;
+  S.dmgPct=0;
+  S.integrity=100;
+  S.endTimer=0;
+  S.shake=20;
+  S.flash=0.9;
+  sfxLightSpeed();
+  sfxGlitch();
+  pushHeadline("【速報】男性、光速を突破。宇宙に異常なひずみを確認。");
+  showBanner("光速突破", "宇宙の耐久力に限界");
+  spawnErrBoxes(3);
+  for (var i=0;i<40;i++) debrisSpawn(1);
+}
+function spawnErrBoxes(n){
+  for (var i=0;i<n;i++){
+    var d=document.createElement("div");
+    d.className="errbox";
+    var msgs=[
+      "Uncaught Error: 宇宙 is not defined\n  at commute (life.js:1)",
+      "TypeError: Cannot read 'space'\n  of undefined",
+      "FATAL: physical_law.js: 光速上限 突破",
+      "Warning: ネクタイが質量を超えています",
+      "Error 999: 通勤経路が見つかりません",
+      "Segmentation fault (core dumped: universe)",
+      "0x00000F: 残業代 支払われません",
+      "Exception: 会議が終わりません"
+    ];
+    d.textContent = msgs[ri(0,msgs.length-1)];
+    d.style.left = rnd(2,70)+"%";
+    d.style.top = rnd(12,80)+"%";
+    d.style.transform="rotate("+rnd(-6,6)+"deg)";
+    elErrs.appendChild(d);
+    S.errBoxes.push(d);
+    if (S.errBoxes.length>10){ var old=S.errBoxes.shift(); if(old&&old.parentNode) old.parentNode.removeChild(old); }
+  }
+}
+function clearErrBoxes(){
+  for (var i=0;i<S.errBoxes.length;i++){ var e=S.errBoxes[i]; if(e&&e.parentNode) e.parentNode.removeChild(e); }
+  S.errBoxes.length=0;
+}
+
+cv.addEventListener("touchstart", function(e){
+  touchSeen=true;
+  audioResume();
+  for (var i=0;i<e.changedTouches.length;i++){
+    var t=e.changedTouches[i];
+    activeTouches[t.identifier]={x:t.clientX,y:t.clientY,t:performance.now(),fired:false};
+  }
+  if (S.mode==="play"||S.mode==="collapse") e.preventDefault();
+}, {passive:false});
+
+cv.addEventListener("touchmove", function(e){
+  if (!activeTouches) return;
+  for (var i=0;i<e.changedTouches.length;i++){
+    var t=e.changedTouches[i], tg=activeTouches[t.identifier];
+    if (!tg || tg.fired) continue;
+    var dy=t.clientY-tg.y, dx=t.clientX-tg.x;
+    if (Math.abs(dy)>32 && Math.abs(dy)>Math.abs(dx)*0.75){
+      tg.fired=true;
+      boost(dy<0?"swipe":"swipeDown", clamp(Math.abs(dy)/110,0.75,2.1));
+    }
+  }
+  if (S.mode==="play"||S.mode==="collapse") e.preventDefault();
+}, {passive:false});
+
+function endTouch(e){
+  for (var i=0;i<e.changedTouches.length;i++){
+    var t=e.changedTouches[i], tg=activeTouches[t.identifier];
+    if (!tg) continue;
+    if (!tg.fired && performance.now()-tg.t < 520){
+      boost("tap",1);
+    }
+    delete activeTouches[t.identifier];
+  }
+}
+cv.addEventListener("touchend", function(e){
+  endTouch(e);
+  if (S.mode==="play"||S.mode==="collapse") e.preventDefault();
+}, {passive:false});
+cv.addEventListener("touchcancel", function(e){
+  for (var i=0;i<e.changedTouches.length;i++){ delete activeTouches[e.changedTouches[i].identifier]; }
+}, {passive:false});
+
+/* pointer fallback (mouse / pen only, touch handled above) */
+var mouseDown=null;
+cv.addEventListener("pointerdown", function(e){
+  audioResume();
+  if (e.pointerType==="touch" && touchSeen) return;
+  mouseDown={x:e.clientX,y:e.clientY,t:performance.now(),fired:false};
+});
+cv.addEventListener("pointermove", function(e){
+  if (!mouseDown || mouseDown.fired) return;
+  var dy=e.clientY-mouseDown.y, dx=e.clientX-mouseDown.x;
+  if (Math.abs(dy)>32 && Math.abs(dy)>Math.abs(dx)*0.75){
+    mouseDown.fired=true;
+    boost(dy<0?"swipe":"swipeDown", clamp(Math.abs(dy)/110,0.75,2.1));
+  }
+});
+cv.addEventListener("pointerup", function(e){
+  if (!mouseDown) return;
+  if (!mouseDown.fired && performance.now()-mouseDown.t<520) boost("tap",1);
+  mouseDown=null;
+});
+cv.addEventListener("pointercancel", function(){ mouseDown=null; });
+
+window.addEventListener("keydown", function(e){
+  if (e.code==="Space"||e.code==="ArrowUp"||e.key===" "){
+    e.preventDefault(); audioResume(); boost("tap",1);
+  }
+});
+
+/* mute */
+elMute.addEventListener("pointerdown", function(e){
+  e.stopPropagation();
+});
+elMute.addEventListener("click", function(e){
+  e.stopPropagation();
+  AU.muted=!AU.muted;
+  try{ localStorage.setItem(LS_MUTE, AU.muted?"1":"0"); }catch(err){}
+  if (AU.master) AU.master.gain.value = AU.muted?0:0.55;
+  elMute.textContent = AU.muted?"🔇":"🔊";
+  elMute.classList.toggle("off",AU.muted);
+});
+elMute.textContent = AU.muted?"🔇":"🔊";
+elMute.classList.toggle("off",AU.muted);
+
+/* =========================================================
+   game flow
+   ========================================================= */
+var scrTitle=$("#scrTitle"), scrResult=$("#scrResult");
+
+function startGame(){
+  audioResume();
+  S.mode="play"; S.p=0; S.dispSpeed=0.1; S.maxSpeed=0.1; S.boosts=0; S.swipeN=0; S.tapN=0;
+  S.combo=0; S.comboT=0; S.lastInput=0; S.stage=-1; S.integrity=100; S.dmgPct=0; S.collapseT=0;
+  S.shake=0; S.flash=0; S.dist=0; S.over=1; S.endTimer=0; S.headIdx=0;
+  S.parts.length=0; S.debris.length=0; clearErrBoxes();
+  scrTitle.classList.add("hide"); scrResult.classList.add("hide");
+  elHud.classList.remove("off"); elRailWrap.classList.remove("off");
+  elHint.style.opacity="1";
+  $("#telop").style.opacity="1";
+  hudUpdate();
+  pushHeadline("速報：月曜8時12分、都内の男性（26）が通勤中に加速を開始した模様。");
+  showBanner("通勤開始","時速0.1km");
+  sfxStageUp();
+}
+
+function retry(){
+  audioResume();
+  scrResult.classList.add("hide");
+  startGame();
+}
+
+function finish(){
+  S.mode="result";
+  var rank = rankFor(S.dmgPct);
+  var best = 0;
+  try{ best = parseFloat(localStorage.getItem(LS_BEST)||"0"); }catch(e){}
+  if (S.maxSpeed>best) best = S.maxSpeed;
+  try{ localStorage.setItem(LS_BEST, String(best)); }catch(e){}
+
+  $("#rsSpeed").textContent = S.maxSpeed>=LS*1.02 ? (S.maxSpeed/LS).toFixed(2)+"倍" : fmt(S.maxSpeed);
+  $("#rsSpeedUnit").textContent = S.maxSpeed>=LS*1.02 ? "光速基準／時速 " + Math.round(S.maxSpeed).toLocaleString("ja-JP") + " km" : "最大到達速度 km/h";
+  $("#rsRank").textContent = rank.name;
+  $("#rsMax").textContent = fmt(S.dist) + " km";
+  $("#rsTaps").textContent = (S.swipeN+S.tapN) + " 回（スワイプ" + S.swipeN + "）";
+  $("#rsDmg").textContent = Math.round(S.dmgPct) + " %";
+  $("#rsTitle").textContent = rank.title;
+  var bt = best<=0 ? "" : (best>=LS*1.02 ? "自己ベスト：光速の"+(best/LS).toFixed(2)+"倍" : "自己ベスト：時速"+fmtKm(best));
+  $("#bestTxt2").textContent = bt;
+
+  elHud.classList.add("off"); elRailWrap.classList.add("off"); elHint.style.opacity="0";
+  $("#telop").style.opacity="0";
+  scrResult.classList.remove("hide");
+  pushHeadline("【速報】宇宙、崩壊。男性は明日も出社予定。");
+  setTimeout(function(){
+    if (S.mode==="result"){ elErrs.innerHTML=""; S.errBoxes.length=0; }
+  }, 400);
+}
+function rankFor(dmg){
+  var r=COLLAPSE_RANKS[0];
+  for (var i=0;i<COLLAPSE_RANKS.length;i++){ if (dmg>=COLLAPSE_RANKS[i].dmg) r=COLLAPSE_RANKS[i]; }
+  return r;
+}
+
+/* buttons */
+function onTap(el, fn){
+  var last=0;
+  el.addEventListener("pointerdown", function(e){ e.stopPropagation(); });
+  el.addEventListener("touchstart", function(e){ e.stopPropagation(); }, {passive:true});
+  el.addEventListener("click", function(e){
+    e.stopPropagation();
+    var t=performance.now();
+    if (t-last<350) return;
+    last=t; fn();
+  });
+}
+onTap($("#startBtn"), startGame);
+onTap($("#retryBtn"), retry);
+onTap($("#shareBtn"), function(){
+  audioResume();
+  var rank=rankFor(S.dmgPct);
+  var speedTxt = S.maxSpeed>=LS*1.02 ? "光速の"+(S.maxSpeed/LS).toFixed(2)+"倍（時速"+Math.round(S.maxSpeed).toLocaleString("ja-JP")+"km）" : "時速"+Math.round(S.maxSpeed).toLocaleString("ja-JP")+"km";
+  var txt = "サラリーマン、"+speedTxt+"に到達して宇宙を壊しました。\n"
+          + "壊した宇宙ランク：【"+rank.name+"】\n"
+          + "称号：「"+rank.title+"」／スワイプ"+S.swipeN+"回\n"
+          + "お前の通勤、どこまで行く？";
+  var url = gameUrl();
+  var u = "https://twitter.com/intent/tweet?text="+encodeURIComponent(txt)
+        + (url?"&url="+encodeURIComponent(url):"")
+        + "&hashtags="+encodeURIComponent("サラリーマン宇宙壊す,バカゲー");
+  window.open(u,"_blank");
+});
+function gameUrl(){
+  if (/^https?:/.test(location.protocol)) return location.href.split("#")[0];
+  return "https://xiudengyouhe22-eng.github.io/salaryman-universe/";
+}
+
+/* =========================================================
+   main loop
+   ========================================================= */
+var lastT=0, acc=0;
+function loop(ts){
+  if (!lastT) lastT=ts;
+  var dt = Math.min(0.05, (ts-lastT)/1000);
+  lastT=ts;
+  S.t += dt;
+
+  if (S.mode==="play"){
+    // coasting: tiny natural gain, decays combo
+    S.p = clamp(S.p + dt*0.0016, 0, 1.001);
+    if (performance.now()-S.lastInput>620){ S.combo=0; }
+    S.dist += S.dispSpeed*dt/3600 * 40;
+    if (S.p>=1.0) enterCollapse();
+  } else if (S.mode==="collapse"){
+    S.collapseT += dt;
+    S.dist += S.dispSpeed*dt/3600 * 40;
+    if (Math.random()<dt*3.2) spawnErrBoxes(1);
+    if (Math.random()<dt*2.4) debrisSpawn(1);
+    S.shake = Math.max(S.shake, 4 + S.collapseT*1.2);
+    if (S.endTimer>0){
+      S.endTimer -= dt;
+      if (S.endTimer<=0){ finish(); }
+    }
+  }
+
+  // decay
+  S.shake *= Math.pow(0.001, dt);
+  S.flash = Math.max(0, S.flash - dt*2.6);
+
+  hudUpdate();
+  stepParts(dt);
+  render(dt);
+
+  requestAnimationFrame(loop);
+}
+
+/* =========================================================
+   init
+   ========================================================= */
+resize();
+buildStars();
+hudUpdate();
+try{
+  var _b=parseFloat(localStorage.getItem(LS_BEST)||"0");
+  if (_b>0){ $("#bestTxt").textContent = "自己ベスト：" + fmt(_b) + " km/h"; }
+}catch(e){}
+requestAnimationFrame(loop);
+
+/* debug hook for automated tests */
+window.__dbg = function(){
+  return {mode:S.mode, p:S.p, speed:S.dispSpeed, maxSpeed:S.maxSpeed, boosts:S.boosts,
+          swipeN:S.swipeN, tapN:S.tapN, stage:S.stage, dmg:S.dmgPct, integrity:S.integrity,
+          errBoxes:S.errBoxes.length, debris:S.debris.length};
+};
+})();
+</script>
+<script src="../ads.js" defer></script>
+</body>
+</html>
