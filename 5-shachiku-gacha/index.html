@@ -95,10 +95,12 @@
   #mainBtn.off{opacity:.4;}
   #holdHint{margin-top:7px;text-align:center;font-size:10px;color:#8f74b8;letter-spacing:.08em;}
 
-  #callout{position:absolute;left:0;right:0;top:32%;z-index:9;text-align:center;pointer-events:none;opacity:0;}
-  #callout .c1{font-size:clamp(32px,12vw,50px);font-weight:900;color:#fff;
-    text-shadow:0 0 22px #ff3bd0,0 0 60px #ff0080,0 0 90px #ff0080;}
-  #callout .c2{font-size:12px;font-weight:900;letter-spacing:.26em;color:#ffe066;margin-top:5px;}
+  #callout{position:fixed;left:0;right:0;z-index:9;display:flex;flex-direction:row;align-items:center;justify-content:center;
+    gap:10px;text-align:center;pointer-events:none;opacity:0;}
+  #callout .c1{font-size:clamp(20px,6.6vw,26px);font-weight:900;line-height:1;
+    text-shadow:0 0 18px #ff3bd0,0 0 44px #ff0080,0 0 70px rgba(255,0,128,.7);}
+  #callout .c2{font-size:10px;font-weight:900;letter-spacing:.2em;color:#ffe066;}
+  #calloutSlot{height:30px;margin-top:4px;}
   #callout.show{animation:callPop 1s cubic-bezier(.16,1.6,.4,1) forwards;}
   @keyframes callPop{0%{opacity:0;transform:scale(.4)}18%{opacity:1;transform:scale(1.14)}34%{transform:scale(1)}78%{opacity:1}100%{opacity:0;transform:scale(1.06)}}
 
@@ -147,6 +149,8 @@
   #rsRareSub{font-size:11px;font-weight:800;color:#c9a6ff;letter-spacing:.16em;margin-top:5px;}
   #rsTitle{font-size:18px;font-weight:900;color:#fff;margin-top:12px;text-shadow:0 0 18px rgba(255,120,220,.6);}
   #rsLife{font-size:13px;font-weight:900;color:#ffd84a;margin-top:6px;letter-spacing:.04em;}
+  #rsLifeBasis{font-size:10px;font-weight:700;color:#a98cff;letter-spacing:.02em;margin-top:5px;line-height:1.65;}
+  #rsLifeBasis b{color:#e6d8f7;font-weight:900;}
   .rs-card{margin-top:14px;width:100%;max-width:340px;background:rgba(20,10,34,.85);border:1px solid rgba(180,120,255,.26);
     border-radius:16px;padding:10px 14px;box-shadow:0 12px 34px rgba(0,0,0,.5);}
   .rs-row{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px dashed rgba(255,255,255,.08);font-size:12px;}
@@ -173,6 +177,7 @@
       <div id="reel"><span id="reelText">？？？</span></div>
       <div id="reelSub">タップで回す</div>
     </div>
+    <div id="calloutSlot"></div>
     <div id="midPanel">
       <div class="mk">現在の社畜レア度</div>
       <div class="mv" id="liveRare">—</div>
@@ -207,6 +212,7 @@
     <div id="rsRareSub">社畜レア度</div>
     <div id="rsTitle">—</div>
     <div id="rsLife">生涯年収：—</div>
+    <div id="rsLifeBasis"></div>
     <div class="rs-card" id="rsCard"></div>
     <div class="rs-btns">
       <button class="btn x" id="shareBtn"><span>𝕏</span> 結果をシェア</button>
@@ -391,6 +397,7 @@ function spin(){
   var slot=SLOTS[S.slot];
   var final=pickItem(slot);
   S.spinning=true;
+  elCallout.classList.remove("show");   // 前回の演出文字を残さない
   elMainBtn.classList.add("off");
   elReelSub.textContent="抽選中…";
   elSlotLabel.textContent=slot.key;
@@ -463,6 +470,12 @@ function addHistory(key,item){
   if(elHistory.children.length>6){ elHistory.removeChild(elHistory.children[0]); }
 }
 function showCallout(a,b){
+  var slot=document.getElementById("calloutSlot");
+  if(slot){
+    var r=slot.getBoundingClientRect();
+    elCallout.style.top=r.top+"px";
+    elCallout.style.height=r.height+"px";
+  }
   elCallout.querySelector(".c1").textContent=a;
   elCallout.querySelector(".c2").textContent=b||"";
   elCallout.classList.remove("show"); void elCallout.offsetWidth; elCallout.classList.add("show");
@@ -499,10 +512,12 @@ function computeLife(){
     ot=om?parseInt(om[1],10):0;
   }
   var otPay=ot*1500*12;
-  var annual=Math.round(salary*10000*(12+bonusMonths)+otPay);
+  var monthYear=Math.round(salary*10000*(12+bonusMonths));
+  var annual=Math.round(monthYear+otPay);
   var denom=Math.round(S.denom);
   var onlyOne=denom>=2000000000;
-  return {annual:annual,salary:salary,bonus:bonusMonths,ot:ot,denom:denom,onlyOne:onlyOne};
+  return {annual:annual,lifetime:annual*40,monthYear:monthYear,otYear:Math.round(otPay),
+          salary:salary,bonus:bonusMonths,ot:ot,denom:denom,onlyOne:onlyOne};
 }
 function fmtDenom(d){
   if(d>=1e8) return "約"+(d/1e8).toFixed(d>=1e9?0:1)+"億分の1";
@@ -513,6 +528,17 @@ function fmtMoney(y){
   if(y<=0) return "0円（夢）";
   if(y>=1e8) return (y/1e8).toFixed(2)+"億円";
   if(y>=1e4) return Math.round(y/1e4).toLocaleString("ja-JP")+"万円";
+  return y.toLocaleString("ja-JP")+"円";
+}
+/* 万円単位を丸めずに表示（計算式と表示額を完全に一致させる） */
+function fmtMan(y){
+  if(y<=0) return "0円";
+  var man=Math.round(y/10000);
+  if(man>=10000){
+    var oku=Math.floor(man/10000), rest=man%10000;
+    return oku+"億"+(rest?rest.toLocaleString("ja-JP")+"万":"")+"円";
+  }
+  if(man>=1) return man.toLocaleString("ja-JP")+"万円";
   return y.toLocaleString("ja-JP")+"円";
 }
 function titleFor(res){
@@ -532,7 +558,11 @@ function showResult(res){
   $("#rsRare").textContent=res.onlyOne?"約20億分の1":fmtDenom(d>1e9?1e9:d);
   $("#rsRareSub").textContent=res.onlyOne?"社畜レア度・測定不能":"社畜レア度";
   $("#rsTitle").textContent="「"+titleFor(res)+"」";
-  $("#rsLife").textContent="生涯年収："+fmtMoney(res.annual*40)+"（40年勤務換算）";
+  $("#rsLife").textContent="生涯年収："+(res.lifetime>0?fmtMan(res.lifetime):"0円（夢）")+"（40年勤務換算）";
+  $("#rsLifeBasis").innerHTML=
+    "月収<b>"+res.salary+"万円</b> × （12＋ボーナス<b>"+res.bonus+"ヶ月</b>） ＝ 年<b>"+fmtMan(res.monthYear)+"</b><br>"
+    +(res.ot>0 ? "残業代 月<b>"+res.ot+"時間</b> × 1,500円 × 12ヶ月 ＝ 年<b>"+fmtMan(res.otYear)+"</b><br>" : "")
+    +"合計 年<b>"+fmtMan(res.annual)+"</b> × 40年 ＝ <b>"+fmtMan(res.lifetime)+"</b>";
   var card=$("#rsCard");
   card.innerHTML="";
   S.results.forEach(function(r){
@@ -609,7 +639,7 @@ onTap($("#shareBtn"),function(){
   var res=S.final; if(!res) return;
   var txt="令和の社畜ガチャを回したら、社畜レア度「"+(res.onlyOne?"約20億分の1・測定不能":fmtDenom(Math.min(S.denom,1e9)))+"」でした。\n"
     +"称号：「"+titleFor(res)+"」\n"
-    +"残業 月"+res.ot+"時間／賞与 年"+res.bonus+"ヶ月／生涯年収 "+fmtMoney(res.annual*40)+"\n"
+    +"残業 月"+res.ot+"時間／賞与 年"+res.bonus+"ヶ月／生涯年収 "+fmtMan(res.lifetime)+"\n"
     +"お前の社畜レア度は？";
   var url=gameUrl();
   var u="https://twitter.com/intent/tweet?text="+encodeURIComponent(txt)
@@ -640,6 +670,7 @@ window.__dbg=function(){
     resultVisible:!document.querySelector("#scrResult").classList.contains("hide"),
     rare:S.results.filter(function(r){return r.tier>=4}).length};
 };
+window.__callout=function(a,b){ showCallout(a,b); };
 })();
 </script>
 <script src="../ads.js" defer></script>
