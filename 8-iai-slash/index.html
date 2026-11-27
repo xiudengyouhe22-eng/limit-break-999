@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>0.01秒の脳汁居合斬り｜全5戦</title>
-<meta name="description" content="画面が「!!」と赤く光った瞬間にタップ。0.12秒以内ならキュイン♪虹フラッシュ＋ヒットストップで相手が真っ二つ。お手付き即敗北の極限居合、全5戦。">
+<meta name="description" content="画面が「!!」と赤く光った瞬間にタップ。0.12秒以内ならキュイン♪虹フラッシュ＋ヒットストップで相手が真っ二つ。ライフ3制で2敗まで許される極限居合、全5戦。">
 <meta name="theme-color" content="#0a0208">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -25,6 +25,9 @@
   #roundTxt{font-size:15px;font-weight:900;letter-spacing:.1em;color:#fff;}
   #dots{display:flex;gap:6px;margin-top:6px;}
   .dot{width:22px;height:5px;border-radius:3px;background:rgba(255,255,255,.14);transition:all .25s;}
+  #lives{display:flex;gap:4px;margin-top:6px;font-size:12px;line-height:1;}
+  #lives .lf{color:#ff2a4d;text-shadow:0 0 10px rgba(255,42,77,.8);transition:all .25s;}
+  #lives .lf.lost{color:#4a2a32;text-shadow:none;opacity:.5;}
   .dot.win{background:#ff2a4d;box-shadow:0 0 10px #ff2a4d;}
   .dot.now{background:#fff;box-shadow:0 0 12px #fff;}
   .dot.lose{background:#4a4a4a;}
@@ -88,8 +91,8 @@
   #flash{position:absolute;inset:0;pointer-events:none;background:#fff;opacity:0;z-index:9;}
   #flash.on{animation:fo .4s ease-out forwards;}
   #flash.red{background:#ff0022;}
-  #flash.red.on{animation:fred .22s ease-out forwards;}
-  @keyframes fred{0%{opacity:.38}55%{opacity:.16}100%{opacity:0}}
+  #flash.red.on{animation:fred .34s ease-out forwards;}
+  @keyframes fred{0%{opacity:.62}38%{opacity:.42}100%{opacity:0}}
   #flash.rain{background:linear-gradient(120deg,#ff004c,#ffe600,#00ff9d,#00a6ff,#c400ff);}
   @keyframes fo{0%{opacity:.92}100%{opacity:0}}
 
@@ -106,6 +109,7 @@
       <div class="lbl">ROUND</div>
       <div id="roundTxt">1 / 5</div>
       <div id="dots"></div>
+      <div id="lives"></div>
     </div>
     <button id="muteBtn" aria-label="サウンド切替">🔊</button>
   </div>
@@ -126,8 +130,8 @@
       即タップ。<b>0.12秒以内</b>なら神速斬り。<br>
       虹フラッシュ＋ヒットストップで<br>
       相手が物理演算で真っ二つ。<br>
-      <span class="red">合図前のタップは即敗北。</span><br>
-      5人の剣士を斬り抜け。
+      お手付きも見逃しも<span class="red">ライフ−1</span>。<br>
+      <b>ライフ3</b>、2敗までは全5戦を戦える。
     </div>
     <button class="btn" id="startBtn">勝負</button>
       <a class="pkl-arcade-link" href="../arcade/" style="display:inline-block;margin-top:12px;padding:7px 14px;border-radius:99px;border:1px solid rgba(140,210,255,.38);background:rgba(8,16,32,.55);color:#9fd8ff;font-size:11px;font-weight:700;letter-spacing:.04em;text-decoration:none;opacity:.8;pointer-events:auto;line-height:1.3;-webkit-tap-highlight-color:transparent;">🎮 他の脳汁ゲームも遊ぶ（全11本）</a>
@@ -140,6 +144,7 @@
     <div id="rStats">
       <div class="stat"><div class="k">最高速度</div><div class="v" id="rBest">—</div></div>
       <div class="stat"><div class="k">撃破</div><div class="v" id="rKills">0 / 5</div></div>
+      <div class="stat"><div class="k">残ライフ</div><div class="v" id="rLives">3 / 3</div></div>
       <div class="stat"><div class="k">神速(0.12秒内)</div><div class="v" id="rPerfect">0</div></div>
     </div>
     <div id="rComment"></div>
@@ -273,6 +278,14 @@ function sfxUI(){ ensureAudio(); tone({type:"square", f0:880, f1:1320, dur:0.06,
 var phase = "title";  // title | intro | wait | signal | cut | hit | dead | result
 var round = 0;        // 0..4
 var wins = 0, kills = 0, perfect = 0;
+var MAX_LIVES = 3, lives = 3;
+var results = [];     // 各ラウンドの勝敗 "win" | "lose"
+var lastLoss = null;  // "false_start" | "timeout" | "slow"
+var LOSS_TEXT = {
+  false_start: "お手付き！合図の前に斬ってしまいました。赤い「!!」が出るまで待つこと。",
+  timeout: "反応遅れ！合図を見逃して斬られました。光った瞬間に指を動かせ。",
+  slow: "わずかに遅れた！相手に先を越されました。あと数十ms。"
+};
 var reacts = [];
 var signalAt = 0, tapAt = 0, reaction = 0;
 var waitStart = 0, signalDelay = 0, feintAt = 0;
@@ -307,6 +320,7 @@ window.addEventListener("resize", function(){ resize(); layout(); }, {passive:tr
 /* ---------- flow ---------- */
 function resetAll(){
   round = 0; wins = 0; kills = 0; perfect = 0; reacts = [];
+  lives = MAX_LIVES; results = []; lastLoss = null;
   particles=[]; halves=[]; slashes=[]; petals=[];
   shake=0; hitstop=0; slowmo=0; playerCut=false;
   buildDots();
@@ -314,11 +328,21 @@ function resetAll(){
 function buildDots(){
   dotsEl.innerHTML = "";
   for (var i=0;i<5;i++){
+    var cls = i < results.length ? (results[i]==="win" ? " win" : " lose")
+                                : (i===round ? " now" : "");
     var d = document.createElement("i");
-    d.className = "dot" + (i<round ? (i<kills?" win":" lose") : (i===round?" now":""));
+    d.className = "dot" + cls;
     dotsEl.appendChild(d);
   }
   roundTxt.textContent = Math.min(5,round+1) + " / 5";
+  updateLives();
+}
+function updateLives(){
+  var box = document.getElementById("lives");
+  if (!box) return;
+  var html = "";
+  for (var i=0;i<MAX_LIVES;i++) html += '<span class="lf' + (i<lives ? "" : " lost") + '">❤</span>';
+  box.innerHTML = html;
 }
 function startGame(){
   ensureAudio();
@@ -344,8 +368,9 @@ function startRound(){
     phase = "wait";
     waitStart = performance.now();
     hint.textContent = "合図を待て…";
-    signalDelay = (700 + Math.random()*1500) / enemy.speed;
-    feintAt = 300 + Math.random()*Math.max(200, signalDelay-450);
+    // 合図までは 1.8〜3.6秒（強敵ほど少し早いが、最低1.6秒は待つ）
+    signalDelay = Math.max(1600, (1800 + Math.random()*1800) / enemy.speed);
+    feintAt = 400 + Math.random()*Math.max(300, signalDelay*0.55);
   }, 1400);
 }
 
@@ -355,7 +380,8 @@ function goSignal(){
   hint.textContent = "今だッ！！";
   sfxSignal();
   flash.classList.remove("on","rain","red"); void flash.offsetWidth; flash.classList.add("red","on");
-  shake = 10;
+  shake = 16;
+  vibrate([0,60]);
 }
 
 function tap(ev){
@@ -372,8 +398,10 @@ function tap(ev){
 function falseStart(){
   phase = "dead";
   stopDrone();
+  lastLoss = "false_start";
+  results.push("lose"); lives--; updateLives();
   hint.textContent = "お手付き…";
-  showBanner("お手付き — 合図前に斬った");
+  showBanner("お手付き！ — 合図の前に斬った");
   sfxDeath();
   vibrate([0,80,60,120]);
   flash.classList.remove("on","rain","red"); void flash.offsetWidth; flash.classList.add("red","on");
@@ -384,7 +412,7 @@ function falseStart(){
     particles.push({x:W*0.30, y:groundY-90, vx:(Math.random()-0.3)*420, vy:(Math.random()-0.6)*420,
       life:0.5+Math.random()*0.6, t:0, size:2+Math.random()*4, hue:350, g:520});
   }
-  setTimeout(showResult, 1500);
+  setTimeout(afterRoundEnd, 1500);
 }
 function judge(){
   stopDrone();
@@ -395,6 +423,7 @@ function judge(){
     perfect++;
     kills++;
     wins++;
+    results.push("win");
     reacts.push(ms);
     sfxKiun();
     setTimeout(sfxSlice, 120);
@@ -415,6 +444,7 @@ function judge(){
     // 辛勝
     phase = "cut";
     kills++; wins++;
+    results.push("win");
     reacts.push(ms);
     sfxSlice();
     flash.classList.remove("on","red","rain"); void flash.offsetWidth; flash.classList.add("on");
@@ -430,17 +460,20 @@ function judge(){
     // 遅すぎ → 斬られる
     phase = "dead";
     playerCut = true;
+    lastLoss = "slow";
+    results.push("lose"); lives--; updateLives();
+    reacts.push(ms);
     sfxDeath();
     vibrate([0,90,60,130]);
     flash.classList.remove("on","rain","red"); void flash.offsetWidth; flash.classList.add("red","on");
-    showBanner("遅ぇ…斬られた");
+    showBanner("わずかに遅れた！ — 相手に先を越された");
     setCalli("敗");
     slashes.push({x:W*0.30, y:groundY-90, a:-0.65, t:0, life:0.5, len:W*0.9});
     for (var i=0;i<20;i++){
       particles.push({x:W*0.30,y:groundY-90,vx:(Math.random()-0.4)*400,vy:(Math.random()-0.6)*380,
         life:0.5+Math.random()*0.5,t:0,size:2+Math.random()*4,hue:350,g:520});
     }
-    setTimeout(showResult, 1600);
+    setTimeout(afterRoundEnd, 1600);
   }
 }
 
@@ -477,8 +510,12 @@ function splitEnemy(){
 }
 
 function nextRoundOrFinish(){
+  afterRoundEnd();
+}
+function afterRoundEnd(){
+  if (phase === "result") return;
   round++;
-  if (round >= 5){ showResult(); return; }
+  if (lives <= 0 || round >= 5){ showResult(); return; }
   startRound();
 }
 
@@ -505,7 +542,8 @@ function showResult(){
   var avg = reacts.length ? reacts.reduce(function(a,b){return a+b;},0)/reacts.length : 0;
   var best = reacts.length ? Math.min.apply(null, reacts) : 0;
   var rank, comment;
-  if (wins === 0){ rank = "斬られる前の男"; comment = "合図前に斬ってしまいました。まずは静かに待つこと。"; }
+  if (lives <= 0){ rank = "散り際の剣士"; comment = (LOSS_TEXT[lastLoss] || "") + " ライフが尽きた。"; }
+  else if (wins === 0){ rank = "斬られる前の男"; comment = LOSS_TEXT[lastLoss] || "合図が出るまで待つこと。"; }
   else if (wins < 5){ rank = "道半ばの侍"; comment = "あと少し。呼吸を整えて、赤い光だけを見ろ。"; }
   else if (avg <= 115){ rank = "剣聖・神域"; comment = "0.1秒の壁を越えました。もはや人間の反応速度ではありません。"; }
   else if (avg <= 135){ rank = "剣豪"; comment = "超高速。相手からは光しか見えていないはず。"; }
@@ -518,6 +556,8 @@ function showResult(){
   document.getElementById("rKills").textContent = wins + " / 5";
   document.getElementById("rPerfect").textContent = perfect;
   document.getElementById("rComment").textContent = comment;
+  var rl = document.getElementById("rLives");
+  if (rl) rl.textContent = lives + " / " + MAX_LIVES;
   document.getElementById("scrResult").classList.add("show");
   sfxWin();
   vibrate([0,50,50,80]);
@@ -784,13 +824,15 @@ function loop(now){
       // 反応なし → 斬られる
       phase = "dead";
       playerCut = true;
+      lastLoss = "timeout";
+      results.push("lose"); lives--; updateLives();
       stopDrone();
       sfxDeath();
       flash.classList.remove("on","rain","red"); void flash.offsetWidth; flash.classList.add("red","on");
-      showBanner("動けず…斬られた");
+      showBanner("反応遅れ！ — 合図を見逃して斬られた");
       setCalli("敗");
       slashes.push({x:W*0.30,y:groundY-90,a:-0.65,t:0,life:0.5,len:W*0.9});
-      setTimeout(showResult, 1500);
+      setTimeout(afterRoundEnd, 1500);
     }
   }
 
@@ -828,18 +870,28 @@ function loop(now){
 
   // 赤いビネット（シグナル中）
   if (phase === "signal"){
-    var g = ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*0.25,W/2,H/2,Math.max(W,H)*0.7);
+    var sp = Math.min(1,(performance.now()-signalAt)/1000/0.55);
+    var g = ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*0.20,W/2,H/2,Math.max(W,H)*0.72);
     g.addColorStop(0,"rgba(255,0,40,0)");
-    g.addColorStop(1,"rgba(255,0,40,"+(0.20+0.16*Math.sin(tGlobal*40))+")");
+    g.addColorStop(1,"rgba(255,0,40,"+(0.26+0.20*Math.sin(tGlobal*40))+")");
     ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
-    // 「!!」
+    // 「!!」 — 画面を横切るほど大きな合図
     ctx.save();
     ctx.textAlign = "center"; ctx.textBaseline="middle";
-    var pulse = 1 + 0.12*Math.sin(tGlobal*40);
-    ctx.font = "900 " + Math.round(Math.min(W,H)*0.34*pulse) + "px 'Hiragino Sans',sans-serif";
+    var pulse = 1 + 0.14*Math.sin(tGlobal*42);
+    var fs = Math.round(Math.min(W,H)*0.46*pulse);
+    ctx.font = "900 " + fs + "px 'Hiragino Sans',sans-serif";
+    ctx.lineJoin = "round";
+    ctx.lineWidth = Math.max(6, fs*0.10);
+    ctx.strokeStyle = "rgba(0,0,0,.55)";
+    ctx.strokeText("!!", W*0.5, H*0.36);
     ctx.fillStyle = "#fff";
-    ctx.shadowColor = "#ff0030"; ctx.shadowBlur = 40;
+    ctx.shadowColor = "#ff0030"; ctx.shadowBlur = 56;
     ctx.fillText("!!", W*0.5, H*0.36);
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = "rgba(255,60,90,"+(1-sp)*0.9+")";
+    ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.arc(W*0.5, H*0.36, Math.min(W,H)*(0.22+0.55*sp), 0, Math.PI*2); ctx.stroke();
     ctx.restore();
   }
 
@@ -881,6 +933,7 @@ document.getElementById("muteBtn").textContent = muted?"🔇":"🔊";
 window.GAME = {
   state: function(){
     return { phase: phase, round: round, wins: wins, kills: kills, perfect: perfect,
+      lives: lives, maxLives: MAX_LIVES, results: results.slice(), lastLoss: lastLoss,
       signal: phase === "signal", reaction: reaction, reacts: reacts.slice(),
       waitLeft: phase==="wait" ? Math.max(0, signalDelay-(performance.now()-waitStart)) : 0 };
   },

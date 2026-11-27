@@ -176,6 +176,18 @@
     animation:lampSpin 1s linear infinite;
   }
   @keyframes lampSpin{from{filter:hue-rotate(0)}to{filter:hue-rotate(360deg)}}
+  #lampNote{
+    font-size:9.5px;letter-spacing:.06em;color:#5f8bad;white-space:nowrap;pointer-events:none;
+    opacity:0;transition:opacity .25s;margin-top:-2px;
+  }
+  #lampNote.on{opacity:.95;}
+  #beamSkip{
+    position:absolute;left:0;right:0;bottom:calc(26px + env(safe-area-inset-bottom));z-index:7;text-align:center;
+    font-size:11px;font-weight:800;letter-spacing:.26em;color:rgba(255,255,255,.62);
+    pointer-events:none;opacity:0;transition:opacity .3s;text-shadow:0 0 12px rgba(0,0,0,.9);
+  }
+  #beamSkip.on{opacity:1;animation:skipPulse 1.2s ease-in-out infinite;}
+  @keyframes skipPulse{0%,100%{opacity:.5}50%{opacity:1}}
 
   /* ---------- game hint ---------- */
   #holdArea{
@@ -407,7 +419,8 @@
       長押しでゲージが<br><b>凄まじい勢いでインフレ</b>する。<br>
       100%で<span class="zero">即バースト・0点</span>。<br>
       <b>95〜99.9%</b>で離せば脳汁確定。<br>
-      全5ラウンドの果てに<span class="beam">はかいこうせん</span>。
+      全5ラウンドの果てに<span class="beam">はかいこうせん</span>。<br>
+      <b>保留</b>が溜まるほど激アツ、<b>チャンス目</b>で倍率UP。
     </p>
     <button id="startBtn" class="btn primary">長押しスタート</button>
     <div class="bestline" id="bestLine"></div>
@@ -420,6 +433,7 @@
     <div id="holdArea">
       <div id="holdHint">長押しで溜める</div>
       <div id="zoneNote">95.0% 〜 99.9% が CRITICAL ゾーン</div>
+      <div id="lampNote">保留＝溜まると激アツ／チャンス目＝倍率UP</div>
     </div>
   </section>
 
@@ -449,6 +463,7 @@
   </section>
 
   <div id="cutin"></div>
+  <div id="beamSkip">タップでスキップ ▶</div>
   <div id="impact"></div>
   <div id="banner"></div>
   <div id="flash"></div>
@@ -799,9 +814,9 @@ function titleFor(total){ for (var i=0;i<TITLES.length;i++) if (total >= TITLES[
 
 /* はかいこうせん 威力ランク */
 var BEAM_RANKS = [
-  { name:"ちいさなこうせん…", power:"WEAK",   tag:"しょぼい",  dur:2.5 },
-  { name:"はかいこうせん！！", power:"HYPER",  tag:"極太",      dur:3.6 },
-  { name:"はかいこうせん ∞",   power:"GODLIKE",tag:"虹色超極太",dur:4.4 }
+  { name:"ちいさなこうせん…", power:"WEAK",   tag:"しょぼい",  dur:2.8 },
+  { name:"はかいこうせん！！", power:"HYPER",  tag:"極太",      dur:3.2 },
+  { name:"はかいこうせん ∞",   power:"GODLIKE",tag:"虹色超極太",dur:3.4 }
 ];
 
 /* =====================================================================
@@ -814,6 +829,10 @@ var totalScore = 0, roundScores = [], roundPrecs = [], roundLabels = [], busts =
 var tickIdx = 0, dangerAcc = 0, fakeTimer = 0, fakeCool = 0, held = false;
 var hitstop = 0, shakeAmt = 0, tGlobal = 0, lastFrame = 0;
 var potential = 0, pd = false;
+var awaitRelease = false;   /* ラウンド終了後、一度離すまで次の溜めを始めない */
+var pdRound = -1;           /* 押し始めた時点のラウンド（持ち越し防止） */
+var lastShownE = null, lastShownTier = null, lastShownScore = null;
+var runIsNew = null;
 var reachFlags = null;
 var vibAcc = 0, ultraFlashAcc = 0;
 var beam = null, lastBeam = null, beamHoldFlag = false, beamHoldAt = 1.8;
@@ -836,6 +855,7 @@ var impactEl = $("#impact"), bannerEl = $("#banner");
 var scrTitle = $("#scrTitle"), scrGame = $("#scrGame"), scrResult = $("#scrResult");
 var muteBtn = $("#muteBtn");
 var rainbowGlow = $("#rainbowGlow"), lampRow = $("#lampRow"), cutinEl = $("#cutin");
+var lampNote = $("#lampNote"), beamSkip = $("#beamSkip");
 
 var W=360, H=640, DPR=1, CX=180, CY=280, R=120;
 
@@ -1217,7 +1237,7 @@ function triggerReach(kind){
     sfxReach("kyun");
     if (navigator.vibrate){ try{ navigator.vibrate([0,18]); }catch(e){} }
   } else if (kind === "atsu"){
-    showCutIn("atsu", "激アツ!!", "チャンス目 出現", 1.0);
+    showCutIn("atsu", "激アツ!!", "チャンス目 出現／狙え倍率UP", 1.0);
     sfxReach("atsu");
     if (navigator.vibrate){ try{ navigator.vibrate([0,28,40,28]); }catch(e){} }
     flash(0.28);
@@ -1271,6 +1291,8 @@ function startGame(){
   round = 0; E = 0; ES = 0; totalScore = 0;
   roundScores = []; roundPrecs = []; roundLabels = []; busts = 0; maxPrec = 0;
   potential = 0; held = false; runCounted = false;
+  awaitRelease = false; runIsNew = null; pdRound = -1;
+  lastShownE = null; lastShownTier = null; lastShownScore = null;
   beam = null; beamHoldFlag = false;
   parts.length = 0; shocks.length = 0;
   resetHUD();
@@ -1299,18 +1321,20 @@ function startRound(i){
   potEl.textContent = "+0";
   holdHint.textContent = "長押しで溜める";
   holdHint.className = "";
+  lastShownE = null; lastShownTier = null; lastShownScore = null;
   holdHint.style.visibility = "hidden";
   zoneNote.style.visibility = "hidden";
   vignette.style.opacity = 0;
   setRainbow(0);
   lampRow.classList.add("on");
+  lampNote.classList.add("on");
 
   showBanner((i+1)+" / 5", ROUNDS[i].name + " ・ " + ROUNDS[i].speedTxt, false);
   setTimeout(function(){
     if (my !== gen) return;
     if (phase === "intro") {
       phase = "ready"; markCurrentDot();
-      if (pd || autoTargets) beginHold();
+      if (autoTargets || (pd && pdRound === round)) beginHold();
     }
   }, 620);
 }
@@ -1369,16 +1393,27 @@ function uiTarget(t){
 function startHold(src, ev){
   if (uiTarget(ev.target)) return false;
   if (phase === "beam"){
-    // ビーム中タップでスキップ（開始直後の取りこぼし防止）
-    if (beam && beam.t > 1.0 && beam.t < beam.cfg.dur - 0.4) beam.t = beam.cfg.dur - 0.4;
+    // ビーム中タップでスキップ
+    skipBeam();
     return false;
   }
   if (phase === "title" || phase === "result") return false;
+  if (phase === "resolve" || phase === "dead"){
+    // ラウンド終了の余韻中に押された指は、一度離すまで次の溜めに持ち越さない
+    awaitRelease = true; holdSrc = src; pd = false;
+    if (ev.cancelable) { try{ ev.preventDefault(); }catch(e){} }
+    return false;
+  }
+  if (awaitRelease){
+    // 前のラウンドの指がまだ離れていない → 受け付けるが溜めない（離したら解除）
+    holdSrc = src; pd = false;
+    return false;
+  }
   // 長押し時のテキスト選択・コールアウト・スクロール・ダブルタップ拡大を抑止
   if (ev.cancelable) { try{ ev.preventDefault(); }catch(e){} }
   if (holdSrc === "touch") return false;   // タッチが主導権を持っている間は pointer を無視
   holdSrc = src;
-  pd = true;
+  pd = true; pdRound = round;
   if (phase === "ready" || phase === "charging") beginHold();
   // phase==="intro" のときは ready になった時点で startRound 側が beginHold する
   return true;
@@ -1389,6 +1424,7 @@ function stopHold(src){
   holdSrc = null;
   pd = false;
   endHold();
+  awaitRelease = false;          // 指が物理的に離れたので次ラウンドの溜めを許可
 }
 
 stage.addEventListener("pointerdown", function(ev){
@@ -1424,9 +1460,11 @@ document.addEventListener("touchmove", function(ev){
 
 function beginHold(){
   if (phase !== "ready" && phase !== "charging") return;
+  if (awaitRelease) return;   // 直前のラウンドの指がまだ離れていない
   if (phase === "ready") {
     phase = "charging";
     E = 0; ES = 0; tickIdx = 0; dangerAcc = 0; fakeTimer = 0; fakeCool = 0;
+    lastShownE = null; lastShownTier = null; lastShownScore = null;
   }
   if (held) return;
   held = true;
@@ -1443,15 +1481,22 @@ function endHold(){
   if (phase !== "charging") return;
   releaseNow();
 }
+function skipBeam(){
+  if (!beam || phase !== "beam") return;
+  if (beam.t < 0.9) return;   // 発射前のタップではスキップしない
+  if (!beam.exploded){ beam.exploded = true; explodeTarget(beam.rank); }
+  finishBeam();
+}
 
 function releaseNow(){
   stopChargeSound(false);
-  var e = Math.round(ES*10)/10;
+  var e = (lastShownE != null) ? lastShownE : Math.round(ES*10)/10;
   if (e >= BUST) { doBust(); return; }
 
-  var tier = tierOf(e);
-  var base = Math.floor(e*e*4 + e*20);
-  var sc = Math.floor(base * tier.mul);
+  var tier = lastShownTier || tierOf(e);
+  var sc = (lastShownScore != null) ? lastShownScore
+           : Math.floor(Math.floor(e*e*4 + e*20) * tier.mul);
+  potEl.textContent = "+" + fmt(sc);   // ゲージ中央の加算表示を確定値に固定
 
   roundScores[round] = sc;
   roundPrecs[round] = e;
@@ -1507,6 +1552,8 @@ function doBust(){
   setRainbow(0);
   holdHint.textContent = "";
   lampRow.classList.remove("on");
+  lampNote.classList.remove("on");
+  potEl.textContent = "+0";
   phase = "resolve";
   var my = gen;
   setTimeout(function(){ if (my===gen) nextRound(); }, 1000);
@@ -2279,6 +2326,8 @@ function startBeam(forceRank){
   parts.length = 0; shocks.length = 0;
   gaugeBox.style.display = "none";
   lampRow.classList.remove("on");
+  lampNote.classList.remove("on");
+  beamSkip.classList.remove("on");
   hud.classList.add("off");
   holdHint.style.visibility = "hidden";
   zoneNote.style.visibility = "hidden";
@@ -2286,16 +2335,21 @@ function startBeam(forceRank){
   setRainbow(0);
   cutinEl.className = "";
   holdHint.textContent = "";
+  awaitRelease = true;
 
   var rank = (forceRank != null) ? forceRank : computeBeamRank();
   lastBeam = rank;
   buildTower();
   beam = { t:0, rank:rank, cfg:BEAM_RANKS[rank], fired:false, exploded:false, text1:false, text2:false,
-            cut:false, holdAt: beamHoldFlag ? beamHoldAt : null };
+            cut:false, holdAt: beamHoldFlag ? beamHoldAt : null, wall0: performance.now() };
   BLK.rank = rank;
   lastBreakSfxT = -9;
   setBeamGeometry();
   sfxBeamCharge(rank);
+  var myB = gen;
+  setTimeout(function(){
+    if (myB === gen && phase === "beam" && beam) beamSkip.classList.add("on");
+  }, 900);
   if (navigator.vibrate){ try{ navigator.vibrate(rank===2?[0,40,30,40]:[0,30]); }catch(e){} }
 }
 
@@ -2388,7 +2442,14 @@ function explodeTarget(rank){
 function updateBeam(dt){
   if (!beam) return;
   var cfg = beam.cfg, rank = beam.rank;
-  if (!(beamHoldFlag && beam.t >= (beam.holdAt||0))) beam.t += dt;
+  /* ビームの尺は実時間で進める（低fpsでも 10秒化しない） */
+  if (beam.wall0 == null) beam.wall0 = performance.now();
+  if (beamHoldFlag && beam.t >= (beam.holdAt||0)){
+    beam.wall0 = performance.now() - beam.t*1000;   // 検証用ホールド中は時間を止める
+  } else {
+    var wall = (performance.now() - beam.wall0)/1000;
+    beam.t = Math.max(beam.t + dt, Math.min(wall, beam.t + 0.25));
+  }
   var t = beam.t;
 
   if (rank === 2 && !beam.cut && t >= 0.30){
@@ -2601,6 +2662,7 @@ function finishBeam(){
   if (phase !== "beam") return;
   beam = null;
   beamHoldFlag = false;
+  beamSkip.classList.remove("on");
   setRainbow(0);
   clearTower();
   showResult();
@@ -2615,6 +2677,8 @@ function showResult(){
   beam = null;
   gaugeBox.style.display = "none";
   lampRow.classList.remove("on");
+  lampNote.classList.remove("on");
+  beamSkip.classList.remove("on");
   hide(scrGame); show(scrResult);
   hud.classList.add("off");
   vignette.style.opacity = 0;
@@ -2623,7 +2687,8 @@ function showResult(){
   clearTower();
   holdHint.style.visibility = "hidden";
 
-  var isNew = totalScore > store.best;
+  var isNew = (runIsNew != null) ? runIsNew : ((store.plays > 0) && (totalScore > store.best) && totalScore > 0);
+  runIsNew = isNew;   // 初回プレイは自己ベストが無いので NEW RECORD を出さない
   if (!runCounted){
     store.best = Math.max(store.best, totalScore);
     if (maxPrec > store.bestPrec) store.bestPrec = maxPrec;
@@ -2917,9 +2982,17 @@ function frame(now){
     pctVal.textContent = (Math.min(e,100)).toFixed(1);
     var mul = (e*e/100);
     multEl.textContent = "MULTI ×" + mul.toFixed(1);
-    var baseNow = Math.floor(e*e*4 + e*20);
-    var potNow = Math.floor(baseNow * tierOf(e).mul);
-    potEl.textContent = "+" + fmt(potNow);
+    if (phase === "resolve"){
+      // 中央の加算表示は確定済みのリザルト値をそのまま出す（数値ズレ防止）
+      potEl.textContent = "+" + fmt(roundScores[round] || 0);
+    } else {
+      var eUp = Math.round(e*10)/10;
+      var tierNow = tierOf(eUp);
+      var baseNow = Math.floor(eUp*eUp*4 + eUp*20);
+      lastShownE = eUp; lastShownTier = tierNow;
+      lastShownScore = Math.floor(baseNow * tierNow.mul);
+      potEl.textContent = "+" + fmt(lastShownScore);
+    }
 
     var t = clamp(e/100,0,1);
     var hueT = t>=0.95 ? (tGlobal*380)%360 : lerp(190,352,Math.pow(t,2.2));
@@ -3049,9 +3122,12 @@ window.LB99 = {
   version: "3.1",
   state: function(){
     return { phase:phase, round:round, E:Math.round(E*10)/10, ES:Math.round(ES*10)/10,
-      holdSrc: holdSrc, pd: pd, held: held,
+      holdSrc: holdSrc, pd: pd, held: held, awaitRelease: awaitRelease,
+      pot: potEl.textContent, scores: roundScores.slice(),
+      plays: store.plays, best: store.best, runIsNew: runIsNew,
       total:totalScore, precs:roundPrecs.slice(), labels:roundLabels.slice(), busts:busts,
       maxPrec:maxPrec, beamRank: beam?beam.rank:lastBeam, beamT: beam?Math.round(beam.t*100)/100:null,
+      beamDur: beam?beam.cfg.dur:null,
       fps: Math.round(fpsAvg), jsMs: Math.round(jsMs*100)/100, errors: errCount, errLog: errLog.slice(),
       particles: parts.length,
       blocks: BLK.tower ? BLK.total : 0,
@@ -3126,6 +3202,7 @@ refreshBest();
 resetHUD();
 gaugeBox.style.display = "none";
 lampRow.classList.remove("on");
+lampNote.classList.remove("on");
 hud.classList.add("off");
 lastFrame = performance.now();
 requestAnimationFrame(frame);
