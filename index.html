@@ -1528,7 +1528,7 @@ function updateBeam(dt){
     shakeAmt = Math.max(shakeAmt, rank===2 ? 2.6 : (rank===1 ? 1.5 : 0.4));
     showBeamText(rank===2 ? "発 射 !!!" : (rank===1 ? "発 射 !!" : "…発 射"),
       rank===0 ? "ちいさなこうせん…" : cfg.power + " BEAM",
-      rank===2 ? "god" : (rank===1 ? "crit" : "weak"), 1.0);
+      rank===2 ? "god" : (rank===1 ? "crit" : "weak"), 1.5);
     if (navigator.vibrate){ try{ navigator.vibrate(rank===2?[0,90,40,140]:[0,50]); }catch(e){} }
   }
 
@@ -1652,16 +1652,17 @@ function drawBeam(){
       var since = ft - 0.12;
       if (since >= 0){
         var boom = clamp(1 - since/(rank===2?1.5:0.9), 0, 1);
-        var rad2 = cap*(rank===2?0.42:0.22)*(0.35+0.65*(1-Math.pow(1-clamp(since/0.18,0,1),2)));
+        var rad2 = cap*(rank===2?0.30:0.16)*(0.35+0.65*(1-Math.pow(1-clamp(since/0.18,0,1),2)));
         if (boom > 0){
-          var grd = ctx.createRadialGradient(beam.ax, beam.ay, 0, beam.ax, beam.ay, rad2*1.4);
+          var grd = ctx.createRadialGradient(beam.ax, beam.ay, 0, beam.ax, beam.ay, rad2*1.15);
           var hueB = rank===2 ? (t*300)%360 : 190;
           grd.addColorStop(0, "rgba(255,255,255,"+(0.95*boom)+")");
-          grd.addColorStop(0.35, "hsla("+hueB+",100%,68%,"+(0.6*boom)+")");
+          grd.addColorStop(0.30, "hsla("+hueB+",100%,68%,"+(0.45*boom)+")");
+          grd.addColorStop(0.62, "hsla("+((hueB+140)%360)+",100%,62%,"+(rank===2?0.28*boom:0)+")");
           grd.addColorStop(1, "hsla("+hueB+",100%,50%,0)");
           ctx.globalAlpha = 1;
           ctx.fillStyle = grd;
-          ctx.beginPath(); ctx.arc(beam.ax, beam.ay, rad2*1.4, 0, 6.2832); ctx.fill();
+          ctx.beginPath(); ctx.arc(beam.ax, beam.ay, rad2*1.15, 0, 6.2832); ctx.fill();
           if (rank === 2){
             // 光条
             ctx.globalAlpha = 0.55*boom;
