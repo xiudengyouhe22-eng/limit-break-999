@@ -811,6 +811,7 @@ var beam = null, lastBeam = null, beamHoldFlag = false, beamHoldAt = 1.8;
 var runCounted = false;
 var lampState = -1;
 var autoTargets = null;
+var pauseFlag = false, autoPauseAt = null;
 var fpsAcc = 0, fpsCount = 0, fpsAvg = 0;
 var costAcc = 0, costCount = 0, jsMs = 0;
 var errCount = 0, errLog = [];
@@ -1895,6 +1896,7 @@ function update(dt){
     }
 
     updateChargeSound(u);
+    if (autoPauseAt != null && ES >= autoPauseAt){ pauseFlag = true; autoPauseAt = null; }
     if (autoTargets && autoTargets[round] != null && ES >= autoTargets[round]){ releaseNow(); return; }
     if (ES >= BUST){ doBust(); return; }
   } else if (phase === "ready"){
@@ -2005,7 +2007,7 @@ function frame(now){
   fpsAcc += dt; fpsCount++;
   if (fpsAcc >= 0.5){ fpsAvg = fpsCount/fpsAcc; fpsAcc = 0; fpsCount = 0; }
 
-  update(dt);
+  if (!pauseFlag) update(dt);
 
   if (phase === "charging" || phase === "resolve" || phase === "ready"){
     var e = (phase==="charging" || phase==="resolve") ? ES : 0;
@@ -2193,6 +2195,11 @@ window.LB99 = {
   },
   seek: function(t){
     if (beam) beam.t = t;
+    return this.state();
+  },
+  pause: function(on, atPct){
+    pauseFlag = !!on;
+    autoPauseAt = (atPct != null) ? atPct : null;
     return this.state();
   },
   skip: function(){
