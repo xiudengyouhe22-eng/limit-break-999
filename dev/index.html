@@ -2913,7 +2913,7 @@ function bindHold(el){
     pd = true;
     if (phase === "beam"){
       // ビーム中タップでスキップ（結果へ）※開始直後の取りこぼし防止
-      if (beam && beam.t > 0.35 && beam.t < beam.cfg.dur - 0.4){ beam.t = beam.cfg.dur - 0.4; }
+      if (beam && beam.t > 1.3 && beam.t < beam.cfg.dur - 0.4){ beam.t = beam.cfg.dur - 0.4; }
       return;
     }
     if (phase !== "ready" && phase !== "charging") return;
