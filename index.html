@@ -1079,45 +1079,43 @@ function drawGauge(u, charging, t){
   }
 
   if (u > 0.001){
-    var uBase = Math.min(u, 0.95);
-    var hue = lerp(186, 352, Math.pow(uBase, 1.7));
     var pulse = u > 0.9 ? (3 + 6*Math.sin(t*26)) : 0;
-    ctx.beginPath();
-    ctx.arc(CX,CY,R,A0,angFor(uBase));
-    ctx.strokeStyle = "hsl("+hue+",100%,"+(62+u*8)+"%)";
-    ctx.lineWidth = lw;
-    ctx.shadowColor = "hsl("+hue+",100%,60%)";
-    ctx.shadowBlur = 18 + u*46 + pulse;
-    ctx.stroke();
-    ctx.shadowBlur = 0;
-
-    ctx.beginPath();
-    ctx.arc(CX,CY,R,A0,angFor(uBase));
-    ctx.strokeStyle = "rgba(255,255,255,"+(0.30+0.5*u)+")";
-    ctx.lineWidth = lw*0.30;
-    ctx.stroke();
-
-    // 95%以上：虹色セグメント
     if (u >= 0.95){
-      var a0 = angFor(0.95), a1 = angFor(u);
-      var segs = 10, i2;
+      // 95%以上：ゲージ全体が虹色発光
+      var a0 = A0, a1 = angFor(u), segs = 18, i2;
       for (i2=0;i2<segs;i2++){
         var s0 = a0 + (a1-a0)*(i2/segs);
-        var s1 = a0 + (a1-a0)*((i2+1)/segs) + 0.004;
-        var hueS = (t*260 + i2*36) % 360;
+        var s1 = a0 + (a1-a0)*((i2+1)/segs) + 0.003;
+        var hueS = (t*240 + i2*20) % 360;
         ctx.beginPath();
         ctx.arc(CX,CY,R,s0,s1);
         ctx.strokeStyle = "hsl("+hueS+",100%,64%)";
         ctx.lineWidth = lw;
         ctx.shadowColor = "hsl("+hueS+",100%,60%)";
-        ctx.shadowBlur = 26 + 24*Math.min(1,(u-0.95)/0.05);
+        ctx.shadowBlur = 24 + 26*Math.min(1,(u-0.95)/0.05) + pulse;
         ctx.stroke();
       }
       ctx.shadowBlur = 0;
       ctx.beginPath();
-      ctx.arc(CX,CY,R,a0,a1);
-      ctx.strokeStyle = "rgba(255,255,255,.55)";
-      ctx.lineWidth = lw*0.28;
+      ctx.arc(CX,CY,R,A0,angFor(u));
+      ctx.strokeStyle = "rgba(255,255,255,"+(0.45+0.2*Math.sin(t*21))+")";
+      ctx.lineWidth = lw*0.30;
+      ctx.stroke();
+    } else {
+      var hue = lerp(186, 352, Math.pow(u, 1.7));
+      ctx.beginPath();
+      ctx.arc(CX,CY,R,A0,angFor(u));
+      ctx.strokeStyle = "hsl("+hue+",100%,"+(62+u*8)+"%)";
+      ctx.lineWidth = lw;
+      ctx.shadowColor = "hsl("+hue+",100%,60%)";
+      ctx.shadowBlur = 18 + u*46 + pulse;
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+
+      ctx.beginPath();
+      ctx.arc(CX,CY,R,A0,angFor(u));
+      ctx.strokeStyle = "rgba(255,255,255,"+(0.30+0.5*u)+")";
+      ctx.lineWidth = lw*0.30;
       ctx.stroke();
     }
 
@@ -1126,7 +1124,7 @@ function drawGauge(u, charging, t){
     ctx.beginPath();
     ctx.arc(ex,ey,lw*0.62,0,6.2832);
     ctx.fillStyle = "#fff";
-    ctx.shadowColor = u>=0.95 ? "hsl("+((t*300)%360)+",100%,65%)" : "hsl("+hue+",100%,65%)";
+    ctx.shadowColor = u>=0.95 ? "hsl("+((t*300)%360)+",100%,65%)" : "hsl("+lerp(186,352,Math.pow(u,1.7))+",100%,65%)";
     ctx.shadowBlur = 26+u*40;
     ctx.fill();
     ctx.shadowBlur = 0;
