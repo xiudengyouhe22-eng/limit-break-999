@@ -2895,11 +2895,11 @@ function bindHold(el){
   el.addEventListener("pointerdown", function(ev){
     if (ev.button != null && ev.button > 0) return;
     if (ev.target && ev.target.closest && ev.target.closest("#hud")) return;
-    if (ev.target && ev.target.closest && ev.target.closest(".screen #resActions")) return;
+    if (ev.target && ev.target.closest && ev.target.closest(".screen")) return;
     pd = true;
     if (phase === "beam"){
-      // ビーム中タップでスキップ（結果へ）
-      if (beam && beam.t < beam.cfg.dur - 0.4){ beam.t = beam.cfg.dur - 0.4; }
+      // ビーム中タップでスキップ（結果へ）※開始直後の取りこぼし防止
+      if (beam && beam.t > 0.35 && beam.t < beam.cfg.dur - 0.4){ beam.t = beam.cfg.dur - 0.4; }
       return;
     }
     if (phase !== "ready" && phase !== "charging") return;
