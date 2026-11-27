@@ -1758,18 +1758,17 @@ function blastWeak(){
   arr.sort(function(p,q){ return p.d - q.d; });
   for (i=0;i<arr.length && i<7;i++){
     b = arr[i];
-    wake(b);
-    b.still = 0;
     if (popd < 2 && b.d < s*1.1){
-      b.vx = -rnd(30, 80);
-      b.vy = rnd(40, 90);
+      wake(b);
+      b.still = 0;
+      b.vx = -rnd(40, 90);
+      b.vy = rnd(20, 60);
       b.va = rnd(-3.6, 3.6);
       b.flash = 0.7;
       popd++;
     } else {
-      b.va = rnd(-1.5, 1.5);
-      b.vx += rnd(-6, 16);
-      b.vy += rnd(-4, 8);
+      b.a += rnd(-0.10, 0.10);
+      b.flash = 0.35;
     }
   }
   shakeAmt = Math.max(shakeAmt, 0.45);
@@ -2394,7 +2393,7 @@ function drawBeam(){
 
     var baseW = rank===0 ? cap*0.018 : (rank===1 ? cap*0.062 : cap*0.115);
     var w = baseW * env * flick;
-    var lenF = rank===0 ? beam.len*0.97 : (beam.edgeLen + 90);
+    var lenF = rank===0 ? beam.len*1.02 : (beam.edgeLen + 90);
 
     var sx = beam.ox + dx*0, sy = beam.oy + dy*0;
 
