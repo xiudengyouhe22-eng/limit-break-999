@@ -807,7 +807,7 @@ var hitstop = 0, shakeAmt = 0, tGlobal = 0, lastFrame = 0;
 var potential = 0, pd = false;
 var reachFlags = null;
 var vibAcc = 0, ultraFlashAcc = 0;
-var beam = null, lastBeam = null, beamHoldFlag = false;
+var beam = null, lastBeam = null, beamHoldFlag = false, beamHoldAt = 1.8;
 var runCounted = false;
 var lampState = -1;
 var autoTargets = null;
@@ -1455,7 +1455,8 @@ function startBeam(forceRank){
 
   var rank = (forceRank != null) ? forceRank : computeBeamRank();
   lastBeam = rank;
-  beam = { t:0, rank:rank, cfg:BEAM_RANKS[rank], fired:false, exploded:false, text1:false, text2:false, holdAt:null };
+  beam = { t:0, rank:rank, cfg:BEAM_RANKS[rank], fired:false, exploded:false, text1:false, text2:false,
+            holdAt: beamHoldFlag ? beamHoldAt : null };
   setBeamGeometry();
   sfxBeamCharge(rank);
   if (navigator.vibrate){ try{ navigator.vibrate(rank===2?[0,40,30,40]:[0,30]); }catch(e){} }
@@ -2182,7 +2183,12 @@ window.LB99 = {
   },
   beamHold: function(on, at){
     beamHoldFlag = !!on;
-    if (beam && on && at) beam.holdAt = at;
+    if (at != null) beamHoldAt = at;
+    if (beam && on) beam.holdAt = beamHoldAt;
+    return this.state();
+  },
+  seek: function(t){
+    if (beam) beam.t = t;
     return this.state();
   },
   skip: function(){
@@ -2199,7 +2205,7 @@ window.LB99 = {
     busts = rank === 0 ? 2 : 0;
     lastBeam = null;
     hide(scrTitle); hide(scrResult); show(scrGame);
-    hud.classList.remove("off");
+    hud.classList.add("off");
     gaugeBox.style.display = "none";
     startBeam(rank);
     return this.state();
