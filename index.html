@@ -1444,8 +1444,8 @@ function drawBeamTitle(t, rank){
 
   var big, sub;
   if (fire){
-    big = rank===2 ? "発 射 !!!" : (rank===1 ? "発 射 !!" : "…発 射");
-    sub = rank===0 ? "ちいさなこうせん…" : (BEAM_RANKS[rank].power + " BEAM");
+    big = rank===2 ? "はかいこうせん ∞" : (rank===1 ? "はかいこうせん !!" : "…はかいこうせん？");
+    sub = rank===0 ? "ちいさなこうせん…" : (BEAM_RANKS[rank].power + " BEAM ／ 発 射 !!");
   } else {
     big = rank===0 ? "…チャージ" : (rank===2 ? "HYPER BEAM ∞" : "HYPER BEAM");
     sub = "POWER " + fmt(totalScore) + " ／ " + BEAM_RANKS[rank].tag;
@@ -1468,7 +1468,8 @@ function drawBeamTitle(t, rank){
 
   ctx.globalAlpha = a;
   if (rank === 2 && fire){
-    var g = ctx.createLinearGradient(-W*0.40, 0, W*0.40, 0);
+    var tw = ctx.measureText(big).width;
+    var g = ctx.createLinearGradient(-tw/2, 0, tw/2, 0);
     var stops = ["#ff2f6d","#ff9a00","#ffee00","#5dff9d","#5ee7ff","#8b6bff","#ff5ce1"];
     for (var i=0;i<stops.length;i++) g.addColorStop(i/(stops.length-1), stops[i]);
     ctx.fillStyle = g;
