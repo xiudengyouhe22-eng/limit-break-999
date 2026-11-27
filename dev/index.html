@@ -1459,7 +1459,7 @@ function towerLayout(){
   var aspect = W / H;
   var cols = aspect > 1.15 ? 7 : 6;
   var rows = aspect > 1.15 ? 10 : 12;
-  var bw = W * (aspect > 1.15 ? 0.34 : 0.45);
+  var bw = W * (aspect > 1.15 ? 0.34 : 0.50);
   var bh = H * (aspect > 1.15 ? 0.56 : 0.50);
   var s = Math.min(bw/cols, bh/rows);
   var tw = s*cols, th = s*rows;
@@ -2118,12 +2118,28 @@ function drawBlockCounter(t){
   var label = isGod ? "DESTROYED" : "SMASHED";
   var fs = Math.min(W*0.062, 34);
   var y = H*0.905;
+  var txt = BLK.shown + " / " + BLK.total + " BLOCKS!!";
+
   ctx.save();
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
+  ctx.font = "900 " + fs.toFixed(1) + "px 'Hiragino Sans','Noto Sans JP',system-ui,sans-serif";
+  var tw = ctx.measureText(txt).width;
+  var plateW = Math.max(tw + fs*1.8, fs*7.2);
+
+  // 腰板
+  ctx.globalAlpha = fade*0.62;
+  ctx.fillStyle = "rgba(4,0,14,.82)";
+  rrect(W*0.5 - plateW/2, y - fs*1.10, plateW, fs*1.62, fs*0.42);
+  ctx.fill();
+  ctx.globalAlpha = fade*0.5;
+  ctx.strokeStyle = isGod ? "rgba(255,120,235,.55)" : "rgba(0,220,255,.45)";
+  ctx.lineWidth = 1.2;
+  ctx.stroke();
+
   ctx.globalAlpha = fade;
   ctx.font = "900 " + (fs*0.44).toFixed(1) + "px 'Hiragino Sans','Noto Sans JP',system-ui,sans-serif";
-  ctx.fillStyle = isGod ? "rgba(255,255,255,.9)" : "rgba(170,240,255,.9)";
+  ctx.fillStyle = isGod ? "rgba(255,255,255,.92)" : "rgba(170,240,255,.92)";
   ctx.shadowColor = isGod ? "rgba(255,90,220,.9)" : "rgba(0,210,255,.8)";
   ctx.shadowBlur = 12;
   ctx.fillText(label + (isGod ? "  ∞" : ""), W*0.5, y - fs*0.66);
@@ -2136,10 +2152,8 @@ function drawBlockCounter(t){
   ctx.lineJoin = "round";
   ctx.lineWidth = Math.max(4, fs*0.17);
   ctx.strokeStyle = "rgba(3,0,12,.9)";
-  var txt = BLK.shown + " / " + BLK.total + " BLOCKS!!";
   ctx.strokeText(txt, 0, 0);
   if (isGod){
-    var tw = ctx.measureText(txt).width;
     var gg = ctx.createLinearGradient(-tw/2, 0, tw/2, 0);
     var stops = ["#ff2f6d","#ff9a00","#ffee00","#5dff9d","#5ee7ff","#8b6bff","#ff5ce1"];
     for (var i=0;i<stops.length;i++) gg.addColorStop(i/(stops.length-1), stops[i]);
