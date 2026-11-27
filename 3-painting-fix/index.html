@@ -1,0 +1,1097 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>ヤバい絵画の修復師｜30秒で描いて鑑定士を黙らせろ</title>
+<meta name="description" content="破れた名画の穴を30秒で描き足して出品。胡散臭い鑑定士が色・面積・線を見て100円から10億円まで査定する。完成した絵と査定額をXでシェア。">
+<meta property="og:type" content="website">
+<meta property="og:title" content="ヤバい絵画の修復師">
+<meta property="og:description" content="破れた名画の穴を30秒で描き足して出品。鑑定士が100円から10億円まで査定する、お絵かき査定ゲーム。">
+<meta property="og:site_name" content="ヤバい絵画の修復師">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="ヤバい絵画の修復師">
+<meta name="twitter:description" content="破れた名画の穴を30秒で描き足して出品。鑑定士が100円から10億円まで査定する、お絵かき査定ゲーム。">
+<meta name="theme-color" content="#120e08">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="絵画の修復師">
+<style>
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;height:100%;width:100%;overflow:hidden;background:#120e08;color:#f4ead8;
+    font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans JP",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;overscroll-behavior:none;}
+  #stage{position:fixed;inset:0;overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
+  #cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;
+      -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-user-drag:none;}
+
+  #hud{position:absolute;left:0;right:0;top:0;z-index:8;padding:calc(9px + env(safe-area-inset-top)) 14px 0;
+       display:flex;justify-content:space-between;align-items:flex-start;pointer-events:none;transition:opacity .3s;}
+  #hud.off{opacity:0;}
+  .hlbl{font-size:9px;letter-spacing:.24em;color:#a08a68;font-weight:800;}
+  #timer{font-size:30px;font-weight:900;line-height:1;font-variant-numeric:tabular-nums;color:#ffe0a3;
+         text-shadow:0 0 18px rgba(255,190,90,.5);}
+  #timer.hot{color:#ff6b5a;text-shadow:0 0 22px rgba(255,60,40,.8);animation:tick .5s ease-in-out infinite;}
+  @keyframes tick{0%,100%{transform:scale(1)}50%{transform:scale(1.09)}}
+  #subject{text-align:right;}
+  #subjName{font-size:15px;font-weight:900;color:#ffe0a3;letter-spacing:.04em;}
+  #subjMeta{font-size:9.5px;font-weight:700;color:#a08a68;letter-spacing:.08em;margin-top:3px;}
+  #timebar{position:absolute;left:14px;right:14px;top:calc(70px + env(safe-area-inset-top));height:3px;
+           background:rgba(255,255,255,.1);border-radius:99px;overflow:hidden;z-index:7;transition:opacity .3s;}
+  #timebar.off{opacity:0;}
+  #timeFill{height:100%;width:100%;background:linear-gradient(90deg,#ffe0a3,#ff8a3c);transition:width .2s linear;}
+
+  /* brush palette */
+  #tools{position:absolute;left:0;right:0;bottom:calc(88px + env(safe-area-inset-bottom));z-index:9;
+         display:flex;flex-direction:column;align-items:center;gap:8px;transition:opacity .3s;}
+  #tools.off{opacity:0;pointer-events:none;}
+  #palette{display:flex;gap:7px;padding:7px 10px;border-radius:99px;background:rgba(20,15,9,.72);
+           border:1px solid rgba(255,215,160,.16);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);}
+  .pen{width:30px;height:30px;border-radius:50%;border:2px solid rgba(255,255,255,.22);touch-action:manipulation;cursor:pointer;padding:0;}
+  .pen.sel{border-color:#fff;box-shadow:0 0 0 2px rgba(255,220,150,.5),0 0 14px rgba(255,200,120,.6);transform:scale(1.12);}
+  #sizes{display:flex;gap:8px;align-items:center;}
+  .sz{width:34px;height:26px;border-radius:9px;background:rgba(20,15,9,.7);border:1px solid rgba(255,215,160,.2);
+      display:flex;align-items:center;justify-content:center;touch-action:manipulation;cursor:pointer;padding:0;}
+  .sz i{display:block;background:#f0dcc0;border-radius:50%;}
+  .sz.sel{border-color:#ffcf8a;background:rgba(255,180,90,.22);}
+  #undo{width:44px;height:26px;border-radius:9px;background:rgba(20,15,9,.7);border:1px solid rgba(255,215,160,.2);
+        color:#e8d2b0;font-size:11px;font-weight:800;touch-action:manipulation;cursor:pointer;padding:0;}
+
+  #submitBtn{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom));
+             z-index:10;min-width:230px;height:52px;border:0;border-radius:16px;font-family:inherit;font-size:16px;
+             font-weight:900;letter-spacing:.05em;color:#2a1704;cursor:pointer;
+             background:linear-gradient(135deg,#ffe6b0,#f0b45a 45%,#c98a2e);
+             box-shadow:0 10px 28px rgba(220,150,40,.35),inset 0 -3px 0 rgba(0,0,0,.18);touch-action:manipulation;}
+  #submitBtn:active{transform:translateX(-50%) scale(.97);}
+  #submitBtn.off{opacity:0;pointer-events:none;}
+
+  #mute{position:absolute;right:12px;bottom:calc(186px + env(safe-area-inset-bottom));z-index:12;width:36px;height:36px;
+        border-radius:11px;border:1px solid rgba(255,255,255,.16);background:rgba(20,15,9,.62);color:#ffd9a8;
+        font-size:15px;display:flex;align-items:center;justify-content:center;touch-action:manipulation;cursor:pointer;}
+
+  .screen{position:fixed;inset:0;z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;
+          text-align:center;padding:calc(20px + env(safe-area-inset-top)) 18px calc(20px + env(safe-area-inset-bottom));
+          transition:opacity .28s ease,visibility .28s;overflow-y:auto;overscroll-behavior:contain;}
+  .screen.hide{opacity:0;visibility:hidden;pointer-events:none;}
+  .screen::before{content:"";position:absolute;inset:0;z-index:-1;}
+  #scrTitle::before{background:
+      radial-gradient(circle at 50% 16%,rgba(200,150,60,.28),transparent 58%),
+      radial-gradient(circle at 20% 88%,rgba(120,40,20,.35),transparent 55%),
+      linear-gradient(180deg,rgba(18,12,6,.94),rgba(8,5,3,.99));}
+  .kicker{font-size:9.5px;font-weight:900;letter-spacing:.34em;color:#e8b96a;margin-bottom:8px;}
+  .ttl{font-size:clamp(29px,11vw,44px);font-weight:900;line-height:1.12;letter-spacing:.01em;
+       font-family:"Hiragino Mincho ProN","Yu Mincho",serif;
+       background:linear-gradient(180deg,#fff8e8,#f0cf94 60%,#c08c3e);
+       -webkit-background-clip:text;background-clip:text;color:transparent;
+       filter:drop-shadow(0 4px 22px rgba(220,160,60,.45));}
+  .ttl-sub{margin-top:9px;font-size:12.5px;font-weight:800;color:#e6c58f;letter-spacing:.05em;}
+  .rule{margin-top:16px;width:100%;max-width:340px;display:flex;flex-direction:column;gap:8px;font-size:12px;
+        line-height:1.55;font-weight:700;color:#c3ab8b;text-align:left;}
+  .rule div{background:rgba(255,235,200,.045);border:1px solid rgba(255,210,150,.1);border-radius:11px;padding:9px 11px;}
+  .rule b{color:#ffd89a;}
+  .btn{margin-top:16px;width:100%;max-width:340px;min-height:56px;border:0;border-radius:17px;font-family:inherit;
+       font-size:16.5px;font-weight:900;letter-spacing:.04em;color:#2a1704;cursor:pointer;
+       background:linear-gradient(135deg,#ffe6b0,#f0b45a 45%,#c98a2e);
+       box-shadow:0 10px 28px rgba(220,150,40,.4),inset 0 -3px 0 rgba(0,0,0,.18);touch-action:manipulation;
+       display:flex;align-items:center;justify-content:center;gap:8px;transition:transform .08s;}
+  .btn:active{transform:scale(.965);}
+  .btn.ghost{background:rgba(255,245,225,.07);color:#ecd8bb;border:1px solid rgba(255,215,160,.24);box-shadow:none;min-height:46px;font-size:14px;}
+  .btn.x{background:linear-gradient(135deg,#2b2d33,#0d0f13);color:#fff;border:1px solid rgba(255,255,255,.26);box-shadow:0 8px 24px rgba(0,0,0,.5);}
+  .best{margin-top:12px;font-size:11px;font-weight:800;color:#e8b96a;letter-spacing:.06em;}
+
+  /* result */
+  #scrResult::before{background:
+      radial-gradient(circle at 50% 12%,rgba(230,170,60,.32),transparent 60%),
+      radial-gradient(circle at 84% 86%,rgba(120,30,20,.3),transparent 58%),
+      linear-gradient(180deg,rgba(18,11,5,.985),rgba(6,4,2,.998));}
+  .rs-k{font-size:9.5px;font-weight:900;letter-spacing:.34em;color:#e8b96a;margin-bottom:4px;}
+  .rs-price{font-size:clamp(38px,14vw,58px);font-weight:900;line-height:1;color:#fff;
+            font-variant-numeric:tabular-nums;text-shadow:0 0 26px rgba(255,200,90,.7),0 0 70px rgba(255,150,40,.35);}
+  .rs-price small{font-size:15px;color:#ffd89a;margin-left:3px;letter-spacing:.06em;}
+  .rs-grade{font-size:13px;font-weight:900;color:#ffe0a3;letter-spacing:.22em;margin-top:6px;}
+  #cardWrap{margin-top:12px;position:relative;width:100%;max-width:288px;}
+  #cardImg{width:100%;display:block;border-radius:12px;box-shadow:0 16px 44px rgba(0,0,0,.6);
+           -webkit-touch-callout:default;user-select:auto;}
+  #cardHint{font-size:10px;color:#b09468;margin-top:6px;letter-spacing:.04em;}
+  .rs-comment{margin-top:12px;width:100%;max-width:330px;background:rgba(35,24,12,.8);border:1px solid rgba(255,210,150,.2);
+              border-radius:13px;padding:11px 13px;font-size:12.5px;line-height:1.6;font-weight:700;color:#f0dcbe;text-align:left;}
+  .rs-comment b{color:#ffd89a;}
+  .rs-btns{margin-top:14px;width:100%;max-width:340px;display:flex;flex-direction:column;gap:8px;}
+  .rs-btns .btn{margin-top:0;max-width:none;}
+  .rs-meta{margin-top:10px;font-size:10.5px;color:#a08a68;letter-spacing:.04em;}
+
+  /* toast */
+  #toast{position:fixed;left:50%;bottom:calc(160px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(10px);
+         z-index:30;background:rgba(30,22,12,.92);border:1px solid rgba(255,210,150,.3);color:#ffe6bd;
+         font-size:11.5px;font-weight:800;padding:8px 14px;border-radius:99px;opacity:0;transition:all .25s;pointer-events:none;}
+  #toast.on{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+<div id="stage">
+  <canvas id="cv"></canvas>
+
+  <div id="hud" class="off">
+    <div>
+      <div class="hlbl">TIME LEFT</div>
+      <div id="timer">30</div>
+    </div>
+    <div id="subject">
+      <div class="hlbl">RESTORING</div>
+      <div id="subjName">—</div>
+      <div id="subjMeta"></div>
+    </div>
+  </div>
+  <div id="timebar" class="off"><div id="timeFill"></div></div>
+
+  <div id="tools" class="off">
+    <div id="palette"></div>
+    <div id="sizes">
+      <button class="sz" data-s="10"><i style="width:7px;height:7px"></i></button>
+      <button class="sz sel" data-s="20"><i style="width:13px;height:13px"></i></button>
+      <button class="sz" data-s="34"><i style="width:20px;height:20px"></i></button>
+      <button id="undo">リセット</button>
+    </div>
+  </div>
+
+  <button id="submitBtn" class="off">出品する（鑑定へ）</button>
+  <div id="mute">🔊</div>
+  <div id="toast"></div>
+
+  <div id="scrTitle" class="screen">
+    <div class="kicker">SALVAGE · APPRAISE · EMBARRASS</div>
+    <div class="ttl">ヤバい絵画の<br>修復師</div>
+    <div class="ttl-sub">30秒で穴を埋めて、鑑定士を黙らせろ。</div>
+    <div class="rule">
+      <div>破れた名画に空いた<b>穴</b>を、指で塗って修復する。</div>
+      <div>制限時間は<b>30秒</b>。色・面積・線の数を鑑定士が見て、<b>100円〜10億円</b>で査定。</div>
+      <div>完成した絵と査定額は<b>画像で保存</b>して𝕏に貼れる。</div>
+    </div>
+    <button class="btn" id="startBtn">修復をはじめる ▶</button>
+    <div class="best" id="bestTxt"></div>
+      <a class="pkl-arcade-link" href="../arcade/" style="display:inline-block;margin-top:12px;padding:7px 14px;border-radius:99px;border:1px solid rgba(140,210,255,.38);background:rgba(8,16,32,.55);color:#9fd8ff;font-size:11px;font-weight:700;letter-spacing:.04em;text-decoration:none;opacity:.8;pointer-events:auto;line-height:1.3;-webkit-tap-highlight-color:transparent;">🎮 他の脳汁ゲームも遊ぶ（全11本）</a>
+  </div>
+
+  <div id="scrResult" class="screen hide">
+    <div class="rs-k">APPRAISAL</div>
+    <div class="rs-price" id="rsPrice">0<small>円</small></div>
+    <div class="rs-grade" id="rsGrade">—</div>
+    <div id="cardWrap">
+      <img id="cardImg" alt="修復した絵画と査定額">
+      <div id="cardHint">画像を長押しで保存 → 𝕏に貼れます</div>
+    </div>
+    <div class="rs-comment" id="rsComment">—</div>
+    <div class="rs-btns">
+      <button class="btn x" id="shareBtn"><span>𝕏</span> 査定結果をシェア</button>
+      <button class="btn ghost" id="retryBtn">別の絵を修復する</button>
+    </div>
+    <div class="rs-meta" id="rsMeta"></div>
+      <a class="pkl-arcade-link" href="../arcade/" style="display:inline-block;margin-top:12px;padding:7px 14px;border-radius:99px;border:1px solid rgba(140,210,255,.38);background:rgba(8,16,32,.55);color:#9fd8ff;font-size:11px;font-weight:700;letter-spacing:.04em;text-decoration:none;opacity:.8;pointer-events:auto;line-height:1.3;-webkit-tap-highlight-color:transparent;">🎮 他の脳汁ゲームも遊ぶ（全11本）</a>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+var $=function(s){return document.querySelector(s)};
+function clamp(v,a,b){return v<a?a:(v>b?b:v)}
+function rnd(a,b){return a+Math.random()*(b-a)}
+function ri(a,b){return Math.floor(rnd(a,b+1))}
+var LS_BEST="painting_price_best_v1", LS_MUTE="painting_mute_v1";
+
+/* ---------------- audio ---------------- */
+var AU={ctx:null,master:null,muted:false};
+try{ AU.muted=localStorage.getItem(LS_MUTE)==="1"; }catch(e){}
+function audioInit(){
+  if(AU.ctx) return;
+  var AC=window.AudioContext||window.webkitAudioContext; if(!AC) return;
+  try{ AU.ctx=new AC(); AU.master=AU.ctx.createGain(); AU.master.gain.value=AU.muted?0:0.5; AU.master.connect(AU.ctx.destination);}catch(e){AU.ctx=null;}
+}
+function audioResume(){ audioInit(); if(AU.ctx&&AU.ctx.state==="suspended"){try{AU.ctx.resume()}catch(e){}} }
+function nowT(){return AU.ctx?AU.ctx.currentTime:0}
+function tone(o){
+  if(!AU.ctx||AU.muted) return;
+  var t0=nowT()+(o.delay||0),osc=AU.ctx.createOscillator(),g=AU.ctx.createGain();
+  osc.type=o.type||"sine"; osc.frequency.setValueAtTime(Math.max(20,o.f||440),t0);
+  if(o.to) osc.frequency.exponentialRampToValueAtTime(Math.max(20,o.to),t0+(o.dur||0.2));
+  var v=o.v==null?0.16:o.v;
+  g.gain.setValueAtTime(0.0001,t0); g.gain.exponentialRampToValueAtTime(v,t0+0.01);
+  g.gain.exponentialRampToValueAtTime(0.0001,t0+(o.dur||0.2));
+  osc.connect(g); g.connect(AU.master); osc.start(t0); osc.stop(t0+(o.dur||0.2)+0.05);
+}
+function noiseBurst(o){
+  if(!AU.ctx||AU.muted) return;
+  var dur=o.dur||0.2,t0=nowT()+(o.delay||0);
+  var len=Math.floor(AU.ctx.sampleRate*dur),buf=AU.ctx.createBuffer(1,len,AU.ctx.sampleRate),d=buf.getChannelData(0);
+  for(var i=0;i<len;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/len,o.pow||2);
+  var src=AU.ctx.createBufferSource(); src.buffer=buf;
+  var f=AU.ctx.createBiquadFilter(); f.type=o.type||"lowpass"; f.frequency.setValueAtTime(o.f||1200,t0);
+  if(o.fTo) f.frequency.exponentialRampToValueAtTime(Math.max(60,o.fTo),t0+dur);
+  var g=AU.ctx.createGain(); g.gain.setValueAtTime(o.v==null?0.2:o.v,t0);
+  g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
+  src.connect(f); f.connect(g); g.connect(AU.master); src.start(t0); src.stop(t0+dur+0.02);
+}
+function sfxBrush(){
+  noiseBurst({dur:0.055,f:2600+rnd(-400,400),fTo:1200,type:"bandpass",v:0.035});
+}
+function sfxTick(){ tone({type:"square",f:1200,dur:0.03,v:0.05}); }
+function sfxHammer(){ noiseBurst({dur:0.28,f:1800,fTo:180,type:"lowpass",v:0.35});
+  tone({type:"sine",f:180,to:60,dur:0.25,v:0.22});
+  tone({type:"triangle",f:900,to:300,dur:0.12,v:0.08,delay:0.02}); }
+function sfxGavel(){ noiseBurst({dur:0.12,f:2500,fTo:400,type:"lowpass",v:0.3});
+  tone({type:"square",f:220,to:90,dur:0.08,v:0.12}); }
+function sfxDing(level){
+  var base=level>0.7?880:(level>0.4?660:520);
+  tone({type:"triangle",f:base,dur:0.25,v:0.14});
+  tone({type:"triangle",f:base*1.5,dur:0.25,v:0.10,delay:0.09});
+  if(level>0.7){ tone({type:"triangle",f:base*2,dur:0.3,v:0.09,delay:0.18}); }
+}
+
+/* ---------------- canvas ---------------- */
+var cv=$("#cv"),ctx=cv.getContext("2d");
+var W=360,H=640,DPR=1;
+function resize(){
+  DPR=Math.min(2,window.devicePixelRatio||1);
+  W=cv.clientWidth||window.innerWidth; H=cv.clientHeight||window.innerHeight;
+  cv.width=Math.round(W*DPR); cv.height=Math.round(H*DPR);
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  layoutPainting();
+}
+window.addEventListener("resize",resize);
+window.addEventListener("orientationchange",function(){setTimeout(resize,120)});
+
+/* painting internal resolution */
+var PW=600, PH=768;
+var LAY={x:0,y:0,w:300,h:384,scale:0.5};
+
+/* ---------------- paintings ---------------- */
+var SUBJECTS=[
+  {id:"mona", name:"謎の微笑み", artist:"レオナルド風", year:"1503年頃"},
+  {id:"scream", name:"叫び", artist:"ムンク風", year:"1893年"},
+  {id:"pearl", name:"真珠の耳飾り", artist:"フェルメール風", year:"1665年"},
+  {id:"sunflower", name:"ひまわり", artist:"ゴッホ風", year:"1888年"}
+];
+
+function paintMona(g){
+  // background
+  var bg=g.createLinearGradient(0,0,0,PH);
+  bg.addColorStop(0,"#5b5a3a"); bg.addColorStop(0.45,"#3d4a32"); bg.addColorStop(0.75,"#2a2f24"); bg.addColorStop(1,"#1a1a14");
+  g.fillStyle=bg; g.fillRect(0,0,PW,PH);
+  // distant landscape
+  g.fillStyle="rgba(120,130,95,.55)";
+  g.beginPath(); g.moveTo(0,300); g.bezierCurveTo(120,240,180,300,260,270);
+  g.bezierCurveTo(360,230,440,290,600,255); g.lineTo(600,420); g.lineTo(0,420); g.closePath(); g.fill();
+  g.fillStyle="rgba(90,105,80,.6)";
+  g.beginPath(); g.moveTo(0,360); g.bezierCurveTo(160,330,300,370,600,335);
+  g.lineTo(600,470); g.lineTo(0,470); g.closePath(); g.fill();
+  // river
+  g.fillStyle="rgba(150,165,140,.45)";
+  g.beginPath(); g.moveTo(120,430); g.bezierCurveTo(220,420,300,460,420,440);
+  g.lineTo(430,470); g.bezierCurveTo(300,490,200,455,110,470); g.closePath(); g.fill();
+  // body
+  g.fillStyle="#2b2318";
+  g.beginPath();
+  g.moveTo(300,430); g.bezierCurveTo(180,450,120,560,105,PH);
+  g.lineTo(495,PH); g.bezierCurveTo(480,560,420,450,300,430); g.closePath(); g.fill();
+  // shoulder fabric folds
+  g.strokeStyle="rgba(0,0,0,.35)"; g.lineWidth=8;
+  g.beginPath(); g.moveTo(200,560); g.bezierCurveTo(230,640,220,700,225,PH); g.stroke();
+  g.beginPath(); g.moveTo(400,560); g.bezierCurveTo(370,640,380,700,375,PH); g.stroke();
+  // neck
+  g.fillStyle="#c69a6a";
+  g.beginPath(); g.ellipse(300,420,52,70,0,0,6.2832); g.fill();
+  // hair back
+  g.fillStyle="#231a12";
+  g.beginPath(); g.ellipse(300,300,120,150,0,0,6.2832); g.fill();
+  // face
+  var fg=g.createRadialGradient(275,255,20,300,290,120);
+  fg.addColorStop(0,"#f0d0a8"); fg.addColorStop(0.7,"#d8ac7a"); fg.addColorStop(1,"#a8794f");
+  g.fillStyle=fg;
+  g.beginPath(); g.ellipse(300,285,88,112,0.02,0,6.2832); g.fill();
+  // hair front
+  g.fillStyle="#2a1e14";
+  g.beginPath();
+  g.moveTo(212,290); g.bezierCurveTo(200,170,290,140,320,150);
+  g.bezierCurveTo(390,160,400,240,392,300);
+  g.bezierCurveTo(370,230,340,205,300,205); g.bezierCurveTo(255,205,225,240,212,290);
+  g.closePath(); g.fill();
+  // veil
+  g.strokeStyle="rgba(60,45,25,.55)"; g.lineWidth=6;
+  g.beginPath(); g.moveTo(215,270); g.bezierCurveTo(210,330,220,380,240,400); g.stroke();
+  // eyes
+  g.fillStyle="#33251a";
+  g.beginPath(); g.ellipse(268,278,12,7,-0.06,0,6.2832); g.fill();
+  g.beginPath(); g.ellipse(332,276,12,7,0.06,0,6.2832); g.fill();
+  g.fillStyle="#f6e3c8";
+  g.beginPath(); g.arc(266,276,3.2,0,6.2832); g.fill();
+  g.beginPath(); g.arc(330,274,3.2,0,6.2832); g.fill();
+  // brows
+  g.strokeStyle="rgba(60,40,25,.5)"; g.lineWidth=4;
+  g.beginPath(); g.moveTo(254,262); g.quadraticCurveTo(268,257,282,262); g.stroke();
+  g.beginPath(); g.moveTo(318,260); g.quadraticCurveTo(332,255,346,261); g.stroke();
+  // nose
+  g.strokeStyle="rgba(120,80,50,.55)"; g.lineWidth=4;
+  g.beginPath(); g.moveTo(300,285); g.quadraticCurveTo(295,310,303,318); g.stroke();
+  // mouth (the smile)
+  g.strokeStyle="rgba(110,60,45,.75)"; g.lineWidth=4.5;
+  g.beginPath(); g.moveTo(272,340); g.quadraticCurveTo(300,354,328,335); g.stroke();
+  g.strokeStyle="rgba(255,235,210,.25)"; g.lineWidth=2;
+  g.beginPath(); g.moveTo(276,342); g.quadraticCurveTo(300,352,324,338); g.stroke();
+  // hands
+  g.fillStyle="#cfa173";
+  g.beginPath(); g.ellipse(300,600,70,34,0.06,0,6.2832); g.fill();
+  g.fillStyle="#c08f60";
+  g.beginPath(); g.ellipse(275,610,44,22,-0.2,0,6.2832); g.fill();
+  // vignette
+  var vg=g.createRadialGradient(300,320,120,300,384,470);
+  vg.addColorStop(0,"rgba(0,0,0,0)"); vg.addColorStop(1,"rgba(20,14,5,.62)");
+  g.fillStyle=vg; g.fillRect(0,0,PW,PH);
+  // craquelure
+  g.strokeStyle="rgba(60,45,25,.12)"; g.lineWidth=1;
+  for(var i=0;i<60;i++){
+    var x=rnd(30,570),y=rnd(30,738);
+    g.beginPath(); g.moveTo(x,y); g.lineTo(x+rnd(-18,18),y+rnd(-14,14)); g.stroke();
+  }
+}
+
+function paintScream(g){
+  var sky=g.createLinearGradient(0,0,0,PH);
+  sky.addColorStop(0,"#c8452b"); sky.addColorStop(0.4,"#e8732c"); sky.addColorStop(0.7,"#f2b23c"); sky.addColorStop(1,"#8e3a2a");
+  g.fillStyle=sky; g.fillRect(0,0,PW,480);
+  // swirling bands
+  var cols=["#f4c04a","#e2622c","#a8302a","#f7d97a","#d4482b"];
+  for(var b=0;b<9;b++){
+    g.strokeStyle=cols[b%cols.length];
+    g.lineWidth=rnd(10,26); g.globalAlpha=0.75;
+    g.beginPath();
+    var y0=40+b*48;
+    g.moveTo(-20,y0);
+    for(var x=0;x<=PW;x+=60){
+      g.quadraticCurveTo(x+30,y0+Math.sin((x+b*40)/70)*38,x+60,y0+Math.sin((x+b*50)/90)*20-10);
+    }
+    g.stroke();
+  }
+  g.globalAlpha=1;
+  // water
+  g.fillStyle="#1d3b4a";
+  g.beginPath(); g.moveTo(0,500); g.lineTo(600,470); g.lineTo(600,768); g.lineTo(0,768); g.closePath(); g.fill();
+  g.strokeStyle="rgba(120,190,210,.3)"; g.lineWidth=5;
+  for(var i=0;i<6;i++){ g.beginPath(); g.moveTo(20+i*30,540+i*30); g.bezierCurveTo(150,520+i*30,300,560+i*30,480,530+i*30); g.stroke(); }
+  // bridge
+  g.fillStyle="#6b2a1e";
+  g.beginPath(); g.moveTo(330,768); g.lineTo(600,530); g.lineTo(600,600); g.lineTo(410,768); g.closePath(); g.fill();
+  g.strokeStyle="#8a3a26"; g.lineWidth=14; g.stroke();
+  // railing
+  g.strokeStyle="#4a1610"; g.lineWidth=12;
+  g.beginPath(); g.moveTo(300,470); g.lineTo(600,420); g.stroke();
+  g.lineWidth=7;
+  for(var r=0;r<5;r++){ var t=r/4; g.beginPath(); g.moveTo(300+t*300,470-t*50); g.lineTo(300+t*300,540-t*50); g.stroke(); }
+  // figure body
+  g.fillStyle="#1a1a20";
+  g.beginPath();
+  g.moveTo(255,420); g.bezierCurveTo(210,470,200,600,215,768);
+  g.lineTo(400,768); g.bezierCurveTo(415,610,400,470,350,420); g.closePath(); g.fill();
+  // arms
+  g.strokeStyle="#16202b"; g.lineWidth=42; g.lineCap="round";
+  g.beginPath(); g.moveTo(250,510); g.quadraticCurveTo(200,470,225,420); g.stroke();
+  g.beginPath(); g.moveTo(360,510); g.quadraticCurveTo(410,470,385,420); g.stroke();
+  // hands
+  g.fillStyle="#d8b48c";
+  g.beginPath(); g.ellipse(220,408,26,34,-0.3,0,6.2832); g.fill();
+  g.beginPath(); g.ellipse(390,408,26,34,0.3,0,6.2832); g.fill();
+  // face
+  var fg=g.createLinearGradient(0,300,0,530);
+  fg.addColorStop(0,"#f2d9ae"); fg.addColorStop(0.6,"#dcbc8e"); fg.addColorStop(1,"#b78d63");
+  g.fillStyle=fg;
+  g.beginPath(); g.ellipse(305,410,90,128,0,0,6.2832); g.fill();
+  // hair
+  g.fillStyle="#2a1a12";
+  g.beginPath(); g.ellipse(305,300,92,44,0,0,6.2832); g.fill();
+  // eyes
+  g.fillStyle="#25303a";
+  g.beginPath(); g.ellipse(272,372,17,13,0.1,0,6.2832); g.fill();
+  g.beginPath(); g.ellipse(338,372,17,13,-0.1,0,6.2832); g.fill();
+  g.fillStyle="#fff";
+  g.beginPath(); g.arc(270,370,4,0,6.2832); g.fill();
+  g.beginPath(); g.arc(336,370,4,0,6.2832); g.fill();
+  // open mouth
+  g.fillStyle="#3a1a16";
+  g.beginPath(); g.ellipse(305,470,30,44,0,0,6.2832); g.fill();
+  g.fillStyle="#6b2b24";
+  g.beginPath(); g.ellipse(305,484,18,22,0,0,6.2832); g.fill();
+  // nasal shadow
+  g.strokeStyle="rgba(140,100,70,.6)"; g.lineWidth=4;
+  g.beginPath(); g.moveTo(305,410); g.lineTo(300,442); g.stroke();
+  var vg=g.createRadialGradient(300,380,140,300,384,480);
+  vg.addColorStop(0,"rgba(0,0,0,0)"); vg.addColorStop(1,"rgba(40,10,5,.45)");
+  g.fillStyle=vg; g.fillRect(0,0,PW,PH);
+}
+
+function paintPearl(g){
+  var bg=g.createRadialGradient(300,300,60,300,384,520);
+  bg.addColorStop(0,"#2a2b23"); bg.addColorStop(0.6,"#15160f"); bg.addColorStop(1,"#080806");
+  g.fillStyle=bg; g.fillRect(0,0,PW,PH);
+  // body / jacket
+  g.fillStyle="#1d1a14";
+  g.beginPath(); g.moveTo(170,700); g.bezierCurveTo(200,560,380,540,470,700); g.lineTo(470,768); g.lineTo(170,768); g.closePath(); g.fill();
+  // white collar
+  g.fillStyle="#d9d2bd";
+  g.beginPath(); g.moveTo(250,640); g.quadraticCurveTo(300,700,350,636); g.quadraticCurveTo(300,720,250,640); g.fill();
+  // neck
+  var ng=g.createLinearGradient(280,480,340,700);
+  ng.addColorStop(0,"#e7bd90"); ng.addColorStop(1,"#b9855c");
+  g.fillStyle=ng;
+  g.beginPath(); g.moveTo(268,470); g.bezierCurveTo(262,580,266,650,300,680);
+  g.bezierCurveTo(340,650,344,570,338,470); g.closePath(); g.fill();
+  // head
+  var fg=g.createRadialGradient(290,290,40,320,350,200);
+  fg.addColorStop(0,"#f7d9b4"); fg.addColorStop(0.62,"#e2b98e"); fg.addColorStop(1,"#b3814f");
+  g.fillStyle=fg;
+  g.beginPath(); g.ellipse(310,340,140,170,-0.16,0,6.2832); g.fill();
+  // turban
+  g.fillStyle="#2f5fa8";
+  g.beginPath();
+  g.moveTo(170,300); g.bezierCurveTo(175,140,400,120,455,255);
+  g.bezierCurveTo(430,215,330,205,270,240);
+  g.bezierCurveTo(230,265,200,290,170,300); g.closePath(); g.fill();
+  g.fillStyle="#3f77c8";
+  g.beginPath(); g.moveTo(180,290); g.bezierCurveTo(200,190,330,150,420,215);
+  g.bezierCurveTo(350,195,250,225,180,290); g.closePath(); g.fill();
+  // yellow cloth
+  g.fillStyle="#e0b445";
+  g.beginPath(); g.moveTo(390,175); g.bezierCurveTo(470,200,470,330,420,380);
+  g.bezierCurveTo(440,300,430,220,390,175); g.closePath(); g.fill();
+  g.fillStyle="#c99a2e";
+  g.beginPath(); g.moveTo(405,250); g.bezierCurveTo(455,290,450,340,425,362);
+  g.bezierCurveTo(438,310,430,275,405,250); g.closePath(); g.fill();
+  // eyes
+  g.fillStyle="#3a2a1c";
+  g.beginPath(); g.ellipse(272,330,20,11,-0.12,0,6.2832); g.fill();
+  g.beginPath(); g.ellipse(372,318,20,11,-0.12,0,6.2832); g.fill();
+  g.fillStyle="#fff";
+  g.beginPath(); g.arc(268,328,4.5,0,6.2832); g.fill();
+  g.beginPath(); g.arc(368,316,4.5,0,6.2832); g.fill();
+  // brows
+  g.strokeStyle="rgba(120,85,55,.5)"; g.lineWidth=4;
+  g.beginPath(); g.moveTo(250,308); g.quadraticCurveTo(272,300,292,306); g.stroke();
+  g.beginPath(); g.moveTo(350,296); g.quadraticCurveTo(372,288,392,296); g.stroke();
+  // nose + lips
+  g.strokeStyle="rgba(160,110,75,.6)"; g.lineWidth=4;
+  g.beginPath(); g.moveTo(322,340); g.quadraticCurveTo(312,382,325,390); g.stroke();
+  g.fillStyle="#c0705f";
+  g.beginPath(); g.ellipse(320,432,30,12,0.04,0,6.2832); g.fill();
+  g.fillStyle="#a8564a";
+  g.beginPath(); g.ellipse(320,436,24,6,0.04,0,6.2832); g.fill();
+  // pearl earring
+  g.fillStyle="rgba(40,30,20,.65)";
+  g.beginPath(); g.ellipse(392,420,30,34,-0.15,0,6.2832); g.fill();
+  var pg=g.createRadialGradient(386,410,2,392,424,18);
+  pg.addColorStop(0,"#ffffff"); pg.addColorStop(0.55,"#e8e2d4"); pg.addColorStop(1,"#9a9488");
+  g.fillStyle=pg; g.beginPath(); g.arc(392,424,16,0,6.2832); g.fill();
+  g.fillStyle="rgba(255,255,255,.85)"; g.beginPath(); g.arc(386,416,5,0,6.2832); g.fill();
+  var vg=g.createRadialGradient(310,340,120,300,384,470);
+  vg.addColorStop(0,"rgba(0,0,0,0)"); vg.addColorStop(1,"rgba(0,0,0,.55)");
+  g.fillStyle=vg; g.fillRect(0,0,PW,PH);
+}
+
+function paintSunflower(g){
+  var bg=g.createLinearGradient(0,0,0,PH);
+  bg.addColorStop(0,"#c9a72c"); bg.addColorStop(0.5,"#9f8a24"); bg.addColorStop(1,"#4a4318");
+  g.fillStyle=bg; g.fillRect(0,0,PW,PH);
+  g.fillStyle="#6b5a1e";
+  g.beginPath(); g.moveTo(0,640); g.lineTo(600,600); g.lineTo(600,768); g.lineTo(0,768); g.closePath(); g.fill();
+  // vase
+  g.fillStyle="#c8b478";
+  g.beginPath(); g.moveTo(240,560); g.bezierCurveTo(220,640,230,700,300,700);
+  g.bezierCurveTo(370,700,380,640,360,560); g.closePath(); g.fill();
+  g.fillStyle="#a89150"; g.fillRect(232,548,136,22);
+  // stems
+  g.strokeStyle="#3d5a1e"; g.lineWidth=9;
+  var heads=[[180,220,60],[300,150,66],[420,240,58],[250,330,50],[380,350,54],[300,430,44]];
+  for(var i=0;i<heads.length;i++){
+    g.beginPath(); g.moveTo(300,570); g.quadraticCurveTo(300+ (heads[i][0]-300)*0.4, 470, heads[i][0], heads[i][1]+heads[i][2]*0.5); g.stroke();
+  }
+  // flowers
+  for(var h=0;h<heads.length;h++){
+    var hx=heads[h][0], hy=heads[h][1], hr=heads[h][2];
+    for(var p=0;p<14;p++){
+      var a=p/14*6.2832 + h*0.3;
+      g.fillStyle=p%2?"#f2c02a":"#e8a81c";
+      g.save(); g.translate(hx+Math.cos(a)*hr*0.8, hy+Math.sin(a)*hr*0.8); g.rotate(a);
+      g.beginPath(); g.ellipse(0,0,hr*0.52,hr*0.2,0,0,6.2832); g.fill(); g.restore();
+    }
+    var cg=g.createRadialGradient(hx-hr*0.15,hy-hr*0.15,2,hx,hy,hr*0.52);
+    cg.addColorStop(0,"#5a3a12"); cg.addColorStop(0.6,"#3a2408"); cg.addColorStop(1,"#1e1204");
+    g.fillStyle=cg; g.beginPath(); g.arc(hx,hy,hr*0.48,0,6.2832); g.fill();
+    g.fillStyle="rgba(255,220,120,.35)";
+    for(var s=0;s<12;s++){ var sa=rnd(0,6.28); g.beginPath(); g.arc(hx+Math.cos(sa)*hr*0.3,hy+Math.sin(sa)*hr*0.3,1.6,0,6.2832); g.fill(); }
+  }
+  var vg=g.createRadialGradient(300,360,140,300,384,470);
+  vg.addColorStop(0,"rgba(0,0,0,0)"); vg.addColorStop(1,"rgba(20,15,0,.5)");
+  g.fillStyle=vg; g.fillRect(0,0,PW,PH);
+}
+var PAINTERS={mona:paintMona,scream:paintScream,pearl:paintPearl,sunflower:paintSunflower};
+
+/* ---------------- state ---------------- */
+var S={
+  mode:"title",   // title | play | result
+  subject:null,
+  paint:null, paintCtx:null,
+  holesPath:null, holes:[],
+  userCanvas:null, userCtx:null,
+  time:30, lastTick:30,
+  strokes:0, painting:false, lastPt:null,
+  color:"#e8b84a", size:20,
+  dirty:true,
+  score:null, price:0,
+  undoStack:[]
+};
+var PALETTE=["#f2cfa8","#c8452b","#2f7fd0","#3f8f4a","#f2c02a","#7b3fa0","#f5f0e2","#241c16"];
+var SIZE_NAMES={10:"細",20:"中",34:"太"};
+
+function layoutPainting(){
+  var maxW=Math.min(W*0.76,330);
+  var maxH=H*0.52;
+  var scale=Math.min(maxW/PW, maxH/PH);
+  LAY.w=PW*scale; LAY.h=PH*scale;
+  LAY.x=(W-LAY.w)/2; LAY.y=H*0.235;
+  if(LAY.y+LAY.h>H*0.76){ LAY.y=Math.max(H*0.16, H*0.76-LAY.h); }
+}
+
+/* ---------------- build painting ---------------- */
+function buildPainting(subj){
+  S.subject=subj;
+  var pc=document.createElement("canvas"); pc.width=PW; pc.height=PH;
+  var g=pc.getContext("2d");
+  PAINTERS[subj.id](g);
+  // cracks / aged layer
+  g.globalAlpha=0.10;
+  g.fillStyle="#3a2a10";
+  for(var i=0;i<120;i++){ g.fillRect(rnd(0,PW),rnd(0,PH),rnd(1,3),rnd(1,3)); }
+  g.globalAlpha=1;
+
+  // damage: torn holes
+  var holes=[];
+  var n=ri(7,9);
+  var tries=0;
+  while(holes.length<n && tries<400){
+    tries++;
+    var cx=rnd(PW*0.14,PW*0.86), cy=rnd(PH*0.12,PH*0.84);
+    var baseR=rnd(26,50);
+    var ok=true;
+    for(var hh=0;hh<holes.length;hh++){
+      var dh=Math.hypot(cx-holes[hh].cx,cy-holes[hh].cy);
+      if(dh<holes[hh].r+baseR+14){ ok=false; break; }
+    }
+    if(!ok) continue;
+    var pts=[], seg=14;
+    for(var k=0;k<seg;k++){
+      var a=k/seg*6.2832;
+      var rr=baseR*(0.68+Math.random()*0.62);
+      pts.push([cx+Math.cos(a)*rr, cy+Math.sin(a)*rr]);
+    }
+    holes.push({cx:cx,cy:cy,pts:pts,r:baseR});
+  }
+  S.holes=holes;
+  var path=new Path2D();
+  for(var m=0;m<holes.length;m++){
+    var hp=holes[m].pts;
+    path.moveTo(hp[0][0],hp[0][1]);
+    for(var q=1;q<hp.length;q++){
+      var p0=hp[q-1],p1=hp[q];
+      path.quadraticCurveTo(p0[0],p0[1],(p0[0]+p1[0])/2,(p0[1]+p1[1])/2);
+    }
+    path.closePath();
+  }
+  S.holesPath=path;
+
+  // paint the holes as torn backing
+  g.save();
+  g.clip(path);
+  var bg2=g.createLinearGradient(0,0,0,PH);
+  bg2.addColorStop(0,"#efe4cd"); bg2.addColorStop(0.5,"#e2d3b6"); bg2.addColorStop(1,"#cdbb98");
+  g.fillStyle=bg2; g.fillRect(0,0,PW,PH);
+  // canvas weave
+  g.strokeStyle="rgba(160,140,105,.22)"; g.lineWidth=1;
+  for(var wx=0;wx<PW;wx+=5){ g.beginPath(); g.moveTo(wx,0); g.lineTo(wx,PH); g.stroke(); }
+  for(var wy=0;wy<PH;wy+=5){ g.beginPath(); g.moveTo(0,wy); g.lineTo(PW,wy); g.stroke(); }
+  // grime inside holes
+  g.fillStyle="rgba(120,90,50,.13)";
+  for(var d=0;d<40;d++){ g.beginPath(); g.arc(rnd(0,PW),rnd(0,PH),rnd(6,26),0,6.2832); g.fill(); }
+  g.restore();
+
+  // torn edges
+  g.strokeStyle="rgba(70,45,20,.55)"; g.lineWidth=5; g.stroke(path);
+  g.strokeStyle="rgba(255,250,235,.5)"; g.lineWidth=2; g.stroke(path);
+
+  S.paint=pc; S.paintCtx=g;
+  // user layer (for analysis)
+  var uc=document.createElement("canvas"); uc.width=PW; uc.height=PH;
+  S.userCanvas=uc; S.userCtx=uc.getContext("2d");
+  S.undoStack=[];
+  S.dirty=true;
+}
+
+/* ---------------- drawing ---------------- */
+function strokeTo(x,y,fromX,fromY){
+  var g=S.paintCtx;
+  g.save();
+  g.clip(S.holesPath);
+  g.strokeStyle=S.color;
+  g.lineWidth=S.size;
+  g.lineCap="round"; g.lineJoin="round";
+  g.beginPath(); g.moveTo(fromX,fromY); g.lineTo(x,y); g.stroke();
+  // soft edge
+  g.globalAlpha=0.35;
+  g.lineWidth=S.size*1.35;
+  g.beginPath(); g.moveTo(fromX,fromY); g.lineTo(x,y); g.stroke();
+  g.restore();
+
+  var ug=S.userCtx;
+  ug.save();
+  ug.clip(S.holesPath);
+  ug.strokeStyle=S.color; ug.lineWidth=S.size; ug.lineCap="round"; ug.lineJoin="round";
+  ug.beginPath(); ug.moveTo(fromX,fromY); ug.lineTo(x,y); ug.stroke();
+  ug.restore();
+}
+
+function screenToPaint(sx,sy){
+  return {x:(sx-LAY.x)/LAY.w*PW, y:(sy-LAY.y)/LAY.h*PH};
+}
+function inPainting(sx,sy){
+  return sx>=LAY.x-14&&sx<=LAY.x+LAY.w+14&&sy>=LAY.y-14&&sy<=LAY.y+LAY.h+14;
+}
+
+/* ---------------- input ---------------- */
+var touchSeen=false;
+cv.addEventListener("touchstart",function(e){
+  touchSeen=true; audioResume();
+  if(S.mode!=="play"){ return; }
+  var t=e.changedTouches[0];
+  if(!inPainting(t.clientX,t.clientY)) return;
+  e.preventDefault();
+  var p=screenToPaint(t.clientX,t.clientY);
+  S.painting=true; S.lastPt=p;
+  S.strokes++;
+  // dot
+  strokeTo(p.x,p.y,p.x+0.1,p.y+0.1);
+  sfxBrush();
+},{passive:false});
+cv.addEventListener("touchmove",function(e){
+  if(S.mode!=="play"||!S.painting) return;
+  e.preventDefault();
+  var t=e.changedTouches[0];
+  var p=screenToPaint(t.clientX,t.clientY);
+  if(S.lastPt) strokeTo(p.x,p.y,S.lastPt.x,S.lastPt.y);
+  S.lastPt=p;
+  if(Math.random()<0.18) sfxBrush();
+},{passive:false});
+cv.addEventListener("touchend",function(e){
+  if(S.mode!=="play") return;
+  S.painting=false; S.lastPt=null;
+},{passive:false});
+cv.addEventListener("touchcancel",function(){ S.painting=false; S.lastPt=null; },{passive:false});
+
+cv.addEventListener("pointerdown",function(e){
+  if(e.pointerType==="touch"&&touchSeen) return;
+  audioResume();
+  if(S.mode!=="play") return;
+  if(!inPainting(e.clientX,e.clientY)) return;
+  var p=screenToPaint(e.clientX,e.clientY);
+  S.painting=true; S.lastPt=p; S.strokes++;
+  strokeTo(p.x,p.y,p.x+0.1,p.y+0.1); sfxBrush();
+});
+cv.addEventListener("pointermove",function(e){
+  if(e.pointerType==="touch"&&touchSeen) return;
+  if(S.mode!=="play"||!S.painting) return;
+  var p=screenToPaint(e.clientX,e.clientY);
+  if(S.lastPt) strokeTo(p.x,p.y,S.lastPt.x,S.lastPt.y);
+  S.lastPt=p;
+});
+cv.addEventListener("pointerup",function(){ S.painting=false; S.lastPt=null; });
+cv.addEventListener("pointercancel",function(){ S.painting=false; S.lastPt=null; });
+
+/* ---------------- render ---------------- */
+function render(){
+  // wall background
+  var bg=ctx.createLinearGradient(0,0,0,H);
+  bg.addColorStop(0,"#231a11"); bg.addColorStop(0.5,"#1a130c"); bg.addColorStop(1,"#0c0906");
+  ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+  // spotlight
+  var sp=ctx.createRadialGradient(W/2,LAY.y+LAY.h*0.3,20,W/2,LAY.y+LAY.h*0.3,Math.max(W,LAY.h)*0.8);
+  sp.addColorStop(0,"rgba(255,215,150,.16)"); sp.addColorStop(1,"rgba(255,180,90,0)");
+  ctx.fillStyle=sp; ctx.fillRect(0,0,W,H);
+  // floor
+  ctx.fillStyle="rgba(0,0,0,.35)"; ctx.fillRect(0,H*0.79,W,H*0.21);
+
+  if(!S.paint) return;
+
+  // frame shadow
+  ctx.save();
+  ctx.shadowColor="rgba(0,0,0,.7)"; ctx.shadowBlur=30; ctx.shadowOffsetY=14;
+  ctx.fillStyle="#000";
+  ctx.fillRect(LAY.x-14,LAY.y-14,LAY.w+28,LAY.h+28);
+  ctx.restore();
+
+  // gold frame
+  var fg=ctx.createLinearGradient(LAY.x,LAY.y,LAY.x,LAY.y+LAY.h);
+  fg.addColorStop(0,"#e6c07a"); fg.addColorStop(0.35,"#b98c3e"); fg.addColorStop(0.6,"#e8cd8d"); fg.addColorStop(1,"#8a6326");
+  ctx.fillStyle=fg;
+  ctx.fillRect(LAY.x-12,LAY.y-12,LAY.w+24,LAY.h+24);
+  ctx.strokeStyle="rgba(255,240,200,.5)"; ctx.lineWidth=1.5;
+  ctx.strokeRect(LAY.x-8,LAY.y-8,LAY.w+16,LAY.h+16);
+  ctx.strokeStyle="rgba(90,60,20,.6)";
+  ctx.strokeRect(LAY.x-12,LAY.y-12,LAY.w+24,LAY.h+24);
+
+  // painting
+  ctx.imageSmoothingEnabled=true;
+  ctx.drawImage(S.paint,LAY.x,LAY.y,LAY.w,LAY.h);
+
+  // glass sheen
+  var sh=ctx.createLinearGradient(LAY.x,LAY.y,LAY.x+LAY.w,LAY.y+LAY.h*0.6);
+  sh.addColorStop(0,"rgba(255,255,255,.10)"); sh.addColorStop(0.4,"rgba(255,255,255,.02)"); sh.addColorStop(1,"rgba(255,255,255,0)");
+  ctx.fillStyle=sh; ctx.fillRect(LAY.x,LAY.y,LAY.w,LAY.h);
+
+  // hint on remaining holes when just started
+  if(S.mode==="play"&&S.time>26){
+    ctx.save();
+    ctx.globalAlpha=clamp((S.time-26)/3,0,1)*0.9;
+    ctx.fillStyle="#2b1a06";
+    ctx.font='900 13px "Hiragino Sans",sans-serif';
+    ctx.textAlign="center";
+    ctx.fillText("穴の中を指で塗って修復",W/2,LAY.y+LAY.h+34);
+    ctx.restore();
+  }
+
+  // brush cursor ring
+  if(S.mode==="play"){
+    ctx.save();
+    ctx.globalAlpha=0.0; ctx.restore();
+  }
+}
+
+/* ---------------- appraisal ---------------- */
+function analyze(){
+  var ug=S.userCtx;
+  var img=ug.getImageData(0,0,PW,PH).data;
+  var painted=0;
+  // hole area
+  var hc=document.createElement("canvas"); hc.width=PW; hc.height=PH;
+  var hg=hc.getContext("2d");
+  hg.fillStyle="#fff"; hg.fill(S.holesPath);
+  var hm=hg.getImageData(0,0,PW,PH).data;
+  var holeArea=0;
+  for(var i=3;i<hm.length;i+=4){ if(hm[i]>128) holeArea++; }
+  var hueBins={};
+  for(var i2=0;i2<img.length;i2+=4){
+    if(img[i2+3]>40){
+      painted++;
+      var r=img[i2]/255,g=img[i2+1]/255,b=img[i2+2]/255;
+      var mx=Math.max(r,g,b),mn=Math.min(r,g,b);
+      if(mx-mn<0.06){ hueBins["g"+(mx>0.5?1:0)]=1; }
+      else{
+        var h;
+        if(mx===r) h=((g-b)/(mx-mn))%6; else if(mx===g) h=(b-r)/(mx-mn)+2; else h=(r-g)/(mx-mn)+4;
+        h=h*60; if(h<0)h+=360;
+        hueBins["h"+Math.floor(h/30)]=1;
+      }
+    }
+  }
+  var coverage=holeArea>0?clamp(painted/holeArea,0,1):0;
+  var variety=Object.keys(hueBins).length/12;
+  return {coverage:coverage,variety:variety,strokes:S.strokes,holeArea:holeArea};
+}
+
+function appraise(){
+  var a=analyze();
+  var coverScore=clamp(a.coverage/0.85,0,1);
+  var varScore=clamp(a.variety/0.5,0,1);
+  var strokeScore=clamp(a.strokes/22,0,1);
+  var total=0.52*coverScore+0.30*varScore+0.18*strokeScore;
+  // slight random appraisal wobble (art is subjective)
+  total=clamp(total+rnd(-0.05,0.05),0,1);
+  var price=Math.round(100*Math.pow(10,total*7));
+  price=Math.min(price,1000000000);
+  // nice rounding
+  if(price>100000000) price=1000000000;
+  else if(price>10000000) price=Math.round(price/1000000)*1000000;
+  else if(price>1000000) price=Math.round(price/100000)*100000;
+  else if(price>100000) price=Math.round(price/10000)*10000;
+  else if(price>10000) price=Math.round(price/1000)*1000;
+  else if(price>1000) price=Math.round(price/100)*100;
+
+  var grade = price>=100000000?"SSS":price>=10000000?"S":price>=3000000?"A":price>=500000?"B":price>=50000?"C":price>=5000?"D":"E";
+  var comment=pickComment(a,price,grade);
+  return {a:a,price:price,grade:grade,comment:comment,total:total};
+}
+
+var COMMENTS={
+  lowCover:[
+    "修復というより、そっとしておいた感じ。穴は空いたままです。",
+    "ほとんど手つかず。これは修復ではなく、無関心です。",
+    "穴が「私を塗って」と言っています。聞こえませんか。"
+  ],
+  lowVar:[
+    "色が一色。もはや単色の壁ですね。",
+    "使った色が1色。勇気は買いますが、絵画ではありません。",
+    "モノクロームの新境地。たぶん誰も望んでいません。"
+  ],
+  mid:[
+    "素人らしい迷いが、逆に味になっています。たぶん偶然です。",
+    "遠目に見れば完成しています。近くで見ると、見なかったことにしましょう。",
+    "修復家というより、穴埋め屋さんですね。それも立派な職業です。",
+    "色遣いに迷いが見えますが、迷いは芸術の母です（諸説あり）。"
+  ],
+  high:[
+    "これは…修復ではありません。もはや別の作品です。ですが、嫌いじゃない。",
+    "元の絵を完全に凌駕しています。原作者が泣いています。",
+    "筆致に狂気を感じます。良い意味です。たぶん。",
+    "よくこんなに塗りましたね。感服しました。査定額は感服料です。"
+  ],
+  max:[
+    "査定不能。この絵はもはや国宝です。持ち出さないでください。",
+    "10億円。ただし買い手は見つかるとは限りません。",
+    "美術史を書き換える一枚。なお、元の絵は何だったのか誰も覚えていません。"
+  ]
+};
+function pickOne(arr){ return arr[ri(0,arr.length-1)]; }
+function pickComment(a,price,grade){
+  if(a.coverage<0.22) return pickOne(COMMENTS.lowCover);
+  if(a.variety<0.12) return pickOne(COMMENTS.lowVar);
+  if(price>=30000000) return pickOne(COMMENTS.max);
+  if(price>=500000) return pickOne(COMMENTS.high);
+  return pickOne(COMMENTS.mid);
+}
+
+/* ---------------- flow ---------------- */
+var elTimer=$("#timer"), elTimeFill=$("#timeFill"), elHud=$("#hud"), elTimebar=$("#timebar");
+var elTools=$("#tools"), elSubmit=$("#submitBtn");
+var scrTitle=$("#scrTitle"), scrResult=$("#scrResult");
+
+function startGame(){
+  audioResume();
+  var subj=SUBJECTS[ri(0,SUBJECTS.length-1)];
+  buildPainting(subj);
+  S.mode="play"; S.time=30; S.lastTick=30; S.strokes=0; S.painting=false; S.lastPt=null; S.score=null;
+  elHud.classList.remove("off"); elTimebar.classList.remove("off");
+  elTools.classList.remove("off"); elSubmit.classList.remove("off");
+  $("#subjName").textContent="『"+subj.name+"』";
+  $("#subjMeta").textContent=subj.artist+"／"+subj.year;
+  scrTitle.classList.add("hide"); scrResult.classList.add("hide");
+  elTimer.textContent="30"; elTimer.classList.remove("hot");
+  elTimeFill.style.width="100%";
+  elTimebar.style.opacity="1";
+  tone({type:"triangle",f:520,to:780,dur:0.2,v:0.12});
+  setTimeout(function(){ if(S.mode==="play") tone({type:"triangle",f:780,dur:0.2,v:0.10}); },140);
+}
+
+function submit(){
+  if(S.mode!=="play") return;
+  S.mode="appraise";
+  S.painting=false; S.lastPt=null;
+  elTools.classList.add("off"); elSubmit.classList.add("off");
+  elHud.classList.add("off"); elTimebar.classList.add("off");
+  sfxHammer();
+  var res=appraise();
+  S.score=res; S.price=res.price;
+  setTimeout(function(){ showResult(res); },520);
+}
+
+function showResult(res){
+  S.mode="result";
+  var priceTxt=formatPrice(res.price);
+  $("#rsPrice").innerHTML=priceTxt+"<small></small>";
+  $("#rsGrade").textContent="鑑定グレード "+res.grade;
+  $("#rsComment").innerHTML="<b>鑑定士：</b>"+res.comment;
+  var a=res.a;
+  $("#rsMeta").textContent="修復率 "+Math.round(a.coverage*100)+"% ／ 使用色 "+Math.round(a.variety*12)+"系統 ／ 線 "+a.strokes+"本";
+  buildCard(res);
+  var best=0;
+  try{ best=parseInt(localStorage.getItem(LS_BEST)||"0",10)||0; }catch(e){}
+  if(res.price>best){ best=res.price; try{localStorage.setItem(LS_BEST,String(best))}catch(e){} }
+  scrResult.classList.remove("hide");
+  sfxDing(res.total);
+  setTimeout(sfxGavel,420);
+}
+function formatPrice(p){
+  if(p>=100000000) return (p/100000000).toFixed(0)+"億円";
+  if(p>=10000) return (p/10000).toFixed(p>=1000000?0:1)+"万円";
+  return p.toLocaleString("ja-JP")+"円";
+}
+
+function buildCard(res){
+  var cw=640, ch=820;
+  var c=document.createElement("canvas"); c.width=cw; c.height=ch;
+  var g=c.getContext("2d");
+  var bg=g.createLinearGradient(0,0,0,ch);
+  bg.addColorStop(0,"#1d150c"); bg.addColorStop(1,"#070504");
+  g.fillStyle=bg; g.fillRect(0,0,cw,ch);
+  // glow
+  var gl=g.createRadialGradient(cw/2,300,60,cw/2,300,420);
+  gl.addColorStop(0,"rgba(230,180,80,.22)"); gl.addColorStop(1,"rgba(230,180,80,0)");
+  g.fillStyle=gl; g.fillRect(0,0,cw,ch);
+  // title
+  g.fillStyle="#e8b96a"; g.font='800 20px "Hiragino Sans",sans-serif'; g.textAlign="center";
+  g.fillText("ヤバい絵画の修復師",cw/2,46);
+  // painting
+  var pw=340, ph=pw*PH/PW, px=(cw-pw)/2, py=68;
+  g.fillStyle="#0b0805"; g.fillRect(px-16,py-16,pw+32,ph+32);
+  var fg=g.createLinearGradient(px,py,px,py+ph);
+  fg.addColorStop(0,"#e6c07a"); fg.addColorStop(0.5,"#b98c3e"); fg.addColorStop(1,"#8a6326");
+  g.fillStyle=fg; g.fillRect(px-11,py-11,pw+22,ph+22);
+  g.drawImage(S.paint,px,py,pw,ph);
+  // subject
+  g.fillStyle="#c9b18b"; g.font='700 17px "Hiragino Sans",sans-serif';
+  g.fillText("『"+S.subject.name+"』 "+S.subject.artist,cw/2,py+ph+38);
+  // price
+  g.fillStyle="#fff"; g.font='900 70px "Hiragino Sans",sans-serif';
+  g.shadowColor="rgba(255,200,90,.6)"; g.shadowBlur=26;
+  g.fillText(formatPrice(res.price),cw/2,py+ph+114);
+  g.shadowBlur=0;
+  // grade + comment
+  g.fillStyle="#ffd89a"; g.font='900 23px "Hiragino Sans",sans-serif';
+  g.fillText("鑑定グレード "+res.grade,cw/2,py+ph+152);
+  g.fillStyle="#e0cba9"; g.font='700 16px "Hiragino Sans",sans-serif';
+  wrapText(g,res.comment,cw/2,py+ph+190,cw-100,25);
+  // footer
+  g.fillStyle="#8f7a58"; g.font='700 14px "Hiragino Sans",sans-serif';
+  g.fillText("修復率 "+Math.round(res.a.coverage*100)+"% ／ 使用色 "+Math.round(res.a.variety*12)+"系統 ／ 線 "+res.a.strokes+"本",cw/2,ch-30);
+
+  $("#cardImg").src=c.toDataURL("image/png");
+}
+function wrapText(g,text,x,y,maxW,lh){
+  var chars=Array.from(text), line="", lines=[];
+  for(var i=0;i<chars.length;i++){
+    var test=line+chars[i];
+    if(g.measureText(test).width>maxW&&line){ lines.push(line); line=chars[i]; }
+    else line=test;
+  }
+  lines.push(line);
+  for(var j=0;j<Math.min(3,lines.length);j++){
+    g.fillText(lines[j]+(j===2&&lines.length>3?"…":""),x,y+j*lh);
+  }
+}
+
+/* tools UI */
+function buildPalette(){
+  var p=$("#palette");
+  PALETTE.forEach(function(col,i){
+    var b=document.createElement("button");
+    b.className="pen"+(i===4?" sel":"");
+    b.style.background=col;
+    b.setAttribute("data-c",col);
+    b.addEventListener("pointerdown",function(e){e.stopPropagation()});
+    b.addEventListener("click",function(e){
+      e.stopPropagation(); audioResume();
+      S.color=col;
+      Array.prototype.forEach.call(document.querySelectorAll(".pen"),function(el){el.classList.toggle("sel",el.getAttribute("data-c")===col)});
+      tone({type:"triangle",f:700+i*40,dur:0.05,v:0.06});
+    });
+    p.appendChild(b);
+  });
+  if(PALETTE[4]) S.color=PALETTE[4];
+}
+buildPalette();
+Array.prototype.forEach.call(document.querySelectorAll(".sz"),function(el){
+  el.addEventListener("pointerdown",function(e){e.stopPropagation()});
+  el.addEventListener("click",function(e){
+    e.stopPropagation(); audioResume();
+    S.size=parseInt(el.getAttribute("data-s"),10);
+    Array.prototype.forEach.call(document.querySelectorAll(".sz"),function(x){x.classList.remove("sel")});
+    el.classList.add("sel");
+  });
+});
+$("#undo").addEventListener("pointerdown",function(e){e.stopPropagation()});
+$("#undo").addEventListener("click",function(e){
+  e.stopPropagation(); audioResume();
+  // reset holes to base state (simple undo: repaint painting)
+  if(!S.subject) return;
+  rebuildKeepSubject();
+  toast("修復をやり直しました");
+});
+function rebuildKeepSubject(){
+  var subj=S.subject;
+  buildPainting(subj);
+  S.strokes=0;
+}
+
+function toast(msg){
+  var t=$("#toast"); t.textContent=msg; t.classList.add("on");
+  clearTimeout(t._t); t._t=setTimeout(function(){t.classList.remove("on")},1400);
+}
+
+function onTap(el,fn){
+  var last=0;
+  el.addEventListener("pointerdown",function(e){e.stopPropagation()});
+  el.addEventListener("touchstart",function(e){e.stopPropagation()},{passive:true});
+  el.addEventListener("click",function(e){
+    e.stopPropagation();
+    var t=performance.now(); if(t-last<320) return; last=t; fn();
+  });
+}
+onTap($("#startBtn"),startGame);
+onTap($("#submitBtn"),submit);
+onTap($("#retryBtn"),startGame);
+onTap($("#shareBtn"),function(){
+  audioResume();
+  var res=S.score; if(!res) return;
+  var txt="破れた名画を30秒で修復したら、鑑定士に「"+formatPrice(res.price)+"」と評価されました。\n"
+        +"『"+S.subject.name+"』／グレード"+res.grade+"／修復率"+Math.round(res.a.coverage*100)+"%\n"
+        +"「"+res.comment+"」\n"
+        +"お前の修復、いくらになる？";
+  var url=gameUrl();
+  var u="https://twitter.com/intent/tweet?text="+encodeURIComponent(txt)
+      +(url?"&url="+encodeURIComponent(url):"")
+      +"&hashtags="+encodeURIComponent("絵画の修復師,バカゲー");
+  window.open(u,"_blank");
+});
+function gameUrl(){
+  if(/^https?:/.test(location.protocol)) return location.href.split("#")[0];
+  return "https://xiudengyouhe22-eng.github.io/painting-restorer/";
+}
+
+/* mute */
+var elMute=$("#mute");
+elMute.addEventListener("pointerdown",function(e){e.stopPropagation()});
+elMute.addEventListener("click",function(e){
+  e.stopPropagation(); AU.muted=!AU.muted;
+  try{localStorage.setItem(LS_MUTE,AU.muted?"1":"0")}catch(err){}
+  if(AU.master) AU.master.gain.value=AU.muted?0:0.5;
+  elMute.textContent=AU.muted?"🔇":"🔊";
+});
+elMute.textContent=AU.muted?"🔇":"🔊";
+
+/* ---------------- loop ---------------- */
+var lastT=0;
+function loop(ts){
+  if(!lastT) lastT=ts;
+  var dt=Math.min(0.05,(ts-lastT)/1000); lastT=ts;
+  if(S.mode==="play"){
+    S.time-=dt;
+    if(S.time<0) S.time=0;
+    var shown=Math.ceil(S.time);
+    if(shown!==S.lastTick){ S.lastTick=shown; if(shown<=10&&shown>0) sfxTick(); }
+    elTimer.textContent=shown;
+    elTimer.classList.toggle("hot",shown<=10);
+    elTimeFill.style.width=(S.time/30*100).toFixed(1)+"%";
+    if(S.time<=0) submit();
+  }
+  render();
+  requestAnimationFrame(loop);
+}
+
+/* init */
+resize();
+requestAnimationFrame(loop);
+window.__dbg=function(){
+  return {mode:S.mode,time:+S.time.toFixed(1),strokes:S.strokes,color:S.color,size:S.size,
+    holes:S.holes.length,holePos:S.holes.map(function(h){return {x:+(LAY.x+h.cx/PW*LAY.w).toFixed(1),y:+(LAY.y+h.cy/PH*LAY.h).toFixed(1),r:+(h.r/PW*LAY.w).toFixed(1)}}),lay:{x:+LAY.x.toFixed(1),y:+LAY.y.toFixed(1),w:+LAY.w.toFixed(1),h:+LAY.h.toFixed(1)},
+    subject:S.subject?S.subject.name:null, price:S.price,
+    score:S.score?{c:+S.score.a.coverage.toFixed(3),v:+S.score.a.variety.toFixed(3),g:S.score.grade}:null};
+};
+})();
+</script>
+<script src="../ads.js" defer></script>
+</body>
+</html>

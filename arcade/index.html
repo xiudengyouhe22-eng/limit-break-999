@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>脳汁ゲー案内所｜無料・登録不要の10秒ブラウザゲーム全11本</title>
+<meta name="description" content="無料・登録不要・インストール不要。10秒で脳汁が出るブラウザゲーム全11本をまとめました。スマホでサクッと遊べる個人制作のフリーゲーム案内所です。">
+<meta name="theme-color" content="#05060f">
+<meta property="og:type" content="website">
+<meta property="og:title" content="脳汁ゲー案内所｜無料・登録不要の10秒ブラウザゲーム全11本">
+<meta property="og:description" content="10秒で脳汁が出るブラウザゲーム全11本。無料・登録不要・インストール不要、スマホでそのまま遊べます。">
+<meta property="og:site_name" content="脳汁ゲー案内所">
+<meta property="og:url" content="https://xiudengyouhe22-eng.github.io/limit-break-999/arcade/">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="脳汁ゲー案内所｜無料10秒ブラウザゲーム全11本">
+<meta name="twitter:description" content="10秒で脳汁が出るブラウザゲーム全11本。無料・登録不要でスマホからそのまま遊べます。">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="脳汁ゲー案内所">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎮</text></svg>">
+<style>
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html{-webkit-text-size-adjust:100%;}
+  body{
+    margin:0;padding:0;background:#05060f;color:#e9f3ff;
+    font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans JP",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    line-height:1.6;overflow-x:hidden;
+    padding-bottom:calc(96px + env(safe-area-inset-bottom));
+  }
+  /* 背景ネオン */
+  .bg{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden;}
+  .bg::before,.bg::after{content:"";position:absolute;border-radius:50%;filter:blur(60px);opacity:.5;}
+  .bg::before{width:70vw;height:70vw;left:-20vw;top:-18vw;background:radial-gradient(circle,#7b2bff 0%,rgba(123,43,255,0) 70%);}
+  .bg::after{width:80vw;height:80vw;right:-28vw;top:26vh;background:radial-gradient(circle,#00b8ff 0%,rgba(0,184,255,0) 70%);}
+  .grid{position:absolute;inset:0;background-image:linear-gradient(rgba(120,180,255,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(120,180,255,.05) 1px,transparent 1px);background-size:38px 38px;}
+
+  .wrap{max-width:560px;margin:0 auto;padding:calc(24px + env(safe-area-inset-top)) 16px 0;}
+
+  /* ---------- header ---------- */
+  header{text-align:center;padding:6px 0 18px;}
+  .kicker{font-size:9.5px;letter-spacing:.34em;font-weight:900;color:#7fb6ff;text-indent:.34em;margin-bottom:8px;}
+  h1{
+    margin:0;font-size:clamp(27px,8.6vw,36px);font-weight:900;letter-spacing:-.01em;line-height:1.16;
+    background:linear-gradient(100deg,#8ef4ff 0%,#b9a6ff 38%,#ff86dd 68%,#ffe66b 100%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    filter:drop-shadow(0 0 22px rgba(130,120,255,.45));
+  }
+  .lead{margin:10px auto 0;max-width:400px;font-size:12px;font-weight:700;color:#a9c0dd;letter-spacing:-.01em;text-wrap:pretty;}
+  .lead b{color:#ffe66b;}
+  .badges{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin-top:14px;}
+  .badges span{font-size:10px;font-weight:800;letter-spacing:.04em;color:#bfe4ff;
+    border:1px solid rgba(130,200,255,.28);background:rgba(15,28,52,.66);border-radius:99px;padding:4px 10px;}
+
+  /* ---------- featured ---------- */
+  .feat-label{font-size:10px;font-weight:900;letter-spacing:.24em;color:#ffd166;text-indent:.24em;margin:8px 2px 8px;}
+  .feat{
+    position:relative;display:block;text-decoration:none;color:inherit;border-radius:20px;padding:2px;
+    background:linear-gradient(135deg,#00e5ff,#7b5cff 42%,#ff2bd6 78%,#ffe23b);
+    box-shadow:0 0 34px rgba(120,90,255,.35);margin-bottom:26px;
+  }
+  .feat-in{position:relative;border-radius:18px;background:radial-gradient(120% 120% at 20% 0%,#101a35 0%,#080b18 62%,#05060f 100%);padding:18px 16px 16px;}
+  .feat-in::after{content:"";position:absolute;inset:0;border-radius:18px;pointer-events:none;
+    background:radial-gradient(circle at 82% 14%,rgba(0,229,255,.18),transparent 58%);}
+  .feat-top{display:flex;align-items:center;gap:12px;}
+  .feat-emoji{font-size:34px;line-height:1;filter:drop-shadow(0 0 14px rgba(255,120,220,.55));}
+  .feat-kicker{font-size:9px;font-weight:900;letter-spacing:.24em;color:#8ef4ff;}
+  .feat-title{font-size:20px;font-weight:900;line-height:1.2;
+    background:linear-gradient(92deg,#fff,#b7f4ff 40%,#ffb3f0);-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .feat-catch{margin:12px 0 14px;font-size:12.5px;font-weight:700;color:#c6d8ef;}
+  .feat-catch b{color:#ffe23b;}
+  .play{
+    display:flex;align-items:center;justify-content:center;gap:8px;width:100%;
+    border-radius:13px;padding:13px 12px;font-size:14px;font-weight:900;letter-spacing:.02em;
+    background:linear-gradient(92deg,#00b8ff,#7b5cff 55%,#ff2bd6);color:#fff;
+    box-shadow:0 8px 26px rgba(90,90,255,.42),inset 0 1px 0 rgba(255,255,255,.4);
+    text-shadow:0 1px 6px rgba(0,0,0,.35);
+  }
+  .feat .play{max-width:100%;}
+
+  /* ---------- list ---------- */
+  .sec-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin:0 2px 12px;}
+  .sec-head h2{margin:0;font-size:15px;font-weight:900;letter-spacing:.02em;color:#eaf4ff;}
+  .sec-head h2 i{font-style:normal;color:#8ef4ff;}
+  .sec-head span{font-size:10px;font-weight:800;color:#7891ad;letter-spacing:.1em;}
+
+  .card{
+    position:relative;display:flex;align-items:center;gap:12px;text-decoration:none;color:inherit;
+    border-radius:16px;padding:13px 13px 13px 12px;margin-bottom:10px;
+    background:linear-gradient(140deg,rgba(20,30,54,.94),rgba(9,13,26,.96));
+    border:1px solid rgba(120,170,255,.16);
+    box-shadow:0 6px 20px rgba(0,0,0,.35);
+    transition:transform .12s ease,border-color .18s ease,box-shadow .18s ease;
+  }
+  .card:active{transform:scale(.985);border-color:rgba(140,220,255,.55);box-shadow:0 0 24px rgba(0,190,255,.28);}
+  .num{position:absolute;top:8px;right:11px;font-size:9px;font-weight:900;letter-spacing:.12em;color:#4d6584;}
+  .emoji{flex:0 0 46px;width:46px;height:46px;border-radius:13px;display:flex;align-items:center;justify-content:center;
+    font-size:23px;background:radial-gradient(circle at 30% 25%,rgba(255,255,255,.16),rgba(90,120,255,.16));
+    border:1px solid rgba(150,190,255,.22);}
+  .body{flex:1 1 auto;min-width:0;}
+  .body h3{margin:0 0 2px;font-size:13.5px;font-weight:900;line-height:1.3;color:#f2f8ff;}
+  .body p{margin:0;font-size:11px;font-weight:700;color:#93aac6;line-height:1.45;text-wrap:pretty;}
+  .go{flex:0 0 auto;display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:900;color:#04121f;
+    background:linear-gradient(92deg,#7ef0ff,#8f9bff);border-radius:99px;padding:7px 11px;white-space:nowrap;
+    box-shadow:0 4px 14px rgba(80,180,255,.3);}
+
+  /* ---------- footer ---------- */
+  footer{margin-top:26px;text-align:center;}
+  .xbox{border-radius:18px;padding:18px 16px 20px;border:1px solid rgba(140,200,255,.18);
+    background:linear-gradient(160deg,rgba(16,24,44,.95),rgba(8,11,22,.97));}
+  .xbox .xemoji{font-size:24px;}
+  .xbox h2{margin:6px 0 4px;font-size:14.5px;font-weight:900;color:#fff;}
+  .xbox p{margin:0 0 14px;font-size:11.5px;font-weight:700;color:#96aec9;}
+  .xbtn{display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;
+    font-size:13px;font-weight:900;color:#fff;background:#0f1419;border:1px solid rgba(255,255,255,.25);
+    border-radius:99px;padding:11px 20px;box-shadow:0 6px 20px rgba(0,0,0,.4);}
+  .xbtn .xmark{font-size:15px;}
+  .xbtn b{color:#8ef4ff;}
+
+  .ad-slot{margin:22px auto 0;border-radius:12px;border:1px dashed rgba(130,180,255,.22);
+    background:rgba(10,16,30,.55);padding:12px 10px;min-height:66px;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:2px;}
+  .ad-slot .lbl{font-size:8px;letter-spacing:.28em;color:#5f7693;font-weight:900;text-indent:.28em;}
+  .ad-slot .txt{font-size:10.5px;font-weight:700;color:#6d84a1;text-align:center;}
+
+  .copy{margin:18px 0 0;font-size:9.5px;color:#4d6280;letter-spacing:.06em;}
+  .copy a{color:#6f8bab;text-decoration:none;}
+
+  @media (min-width:640px){
+    .wrap{padding-top:40px;}
+    .feat-title{font-size:23px;}
+    .body h3{font-size:14.5px;}
+    .body p{font-size:11.5px;}
+  }
+  @media (prefers-reduced-motion:no-preference){
+    .feat{animation:glow 4.5s ease-in-out infinite;}
+    @keyframes glow{0%,100%{box-shadow:0 0 26px rgba(120,90,255,.28);}50%{box-shadow:0 0 42px rgba(0,210,255,.42);}}
+  }
+</style>
+</head>
+<body>
+<div class="bg"><div class="grid"></div></div>
+
+<div class="wrap">
+  <header>
+    <div class="kicker">NOUJIRU ARCADE ── 11 GAMES</div>
+    <h1>脳汁ゲー案内所</h1>
+    <p class="lead">10秒で脳汁が出るブラウザゲーム<b>全11本</b>。<br>無料・登録不要・インストール不要。<br>スマホでそのまま遊べます。</p>
+    <div class="badges">
+      <span>🎁 完全無料</span>
+      <span>🔓 登録不要</span>
+      <span>📱 スマホ対応</span>
+      <span>⚡ 1プレイ10〜30秒</span>
+    </div>
+  </header>
+
+  <div class="feat-label">★ まずはこれ ── 看板ゲーム</div>
+  <a class="feat" href="../">
+    <div class="feat-in">
+      <div class="feat-top">
+        <div class="feat-emoji">💥</div>
+        <div>
+          <div class="feat-kicker">LIMIT BREAK 99.9%</div>
+          <div class="feat-title">限界ギリギリ止め</div>
+        </div>
+      </div>
+      <p class="feat-catch">長押しでゲージがインフレ。<br><b>95〜99.9%</b>で離せば脳汁確定。<br>100%で即バースト・0点。</p>
+      <div class="play">▶ 今すぐ遊ぶ（無料）</div>
+    </div>
+  </a>
+
+  <div class="sec-head">
+    <h2>全<i>11</i>本ラインナップ</h2>
+    <span>1 PLAY 10-30 SEC</span>
+  </div>
+
+  <a class="card" href="../">
+    <span class="num">01</span>
+    <div class="emoji">💥</div>
+    <div class="body">
+      <h3>LIMIT BREAK 99.9%</h3>
+      <p>限界ギリギリで止める。95〜99.9%で脳汁、100%で即バースト。</p>
+    </div>
+    <span class="go">▶ プレイ</span>
+  </a>
+
+  <a class="card" href="../1-salaryman/">
+    <span class="num">02</span>
+    <div class="emoji">💼</div>
+    <div class="body">
+      <h3>サラリーマン、宇宙を壊す。</h3>
+      <p>上スワイプで爆速加速。光速を超えたら宇宙が崩壊する。</p>
+    </div>
+    <span class="go">▶ プレイ</span>
+  </a>
+
+  <a class="card" href="../2-kanji-blade/">
+    <span class="num">03</span>
+    <div class="emoji">🈶</div>
+    <div class="body">
+      <h3>漢字ブレード</h3>
+      <p>好きな漢字1文字が物理コマに。相手を場外へ弾き飛ばせ。</p>
+    </div>
+    <span class="go">▶ プレイ</span>
+  </a>
+
+  <a class="card" href="../3-painting-fix/">
+    <span class="num">04</span>
+    <div class="emoji">🖼️</div>
+    <div class="body">
+      <h3>ヤバい絵画の修復師</h3>
+      <p>30秒で描き足して出品。胡散臭い鑑定士の査定額で勝負。</p>
+    </div>
+    <span class="go">▶ プレイ</span>
+  </a>
+
+  <a class="card" href="../4-majority-choice/">
+    <span class="num">05</span>
+    <div class="emoji">🔀</div>
+    <div class="body">
+      <h3>多数派にならないと爆散する2択</h3>
+      <p>100人の群衆と走れ。少数派を選んだ瞬間に物理演算で爆散。</p>
+    </div>
+    <span class="go">▶ プレイ</span>
+  </a>
+
+  <a class="card" href="../5-shachiku-gacha/">
+    <span class="num">06</span>
+    <div class="emoji">🎰</div>
+    <div class="body">
+      <h3>令和の社畜ガチャ</h3>
+      <p>配属先も上司もガチャで決定。あなたの社畜レア度は〇万分の1。</p>
+    </div>
+    <span class="go">▶ プレイ</span>
+  </a>
+
+  <a class="card" href="../6-spospo-blast/">
+    <span class="num">07</span>
+    <div class="emoji">🫧</div>
+    <div class="body">
+      <h3>脳汁スポスポ爆破</h3>
+      <p>25秒で玉を抜きまくれ。虹玉を引けば全画面が大爆発。</p>
+    </div>
+    <span class="go">▶ プレイ</span>
+  </a>
+
+  <a class="card" href="../7-one-shot-fly/">
+    <span class="num">08</span>
+    <div class="emoji">🚀</div>
+    <div class="body">
+      <h3>一撃どこまで吹っ飛ぶか</h3>
+      <p>長押しパワーで人間をぶっ放せ。ビルも月も火星もぶち抜く。</p>
+    </div>
+    <span class="go">▶ プレイ</span>
+  </a>
+
+  <a class="card" href="../8-iai-slash/">
+    <span class="num">09</span>
+    <div class="emoji">⚔️</div>
+    <div class="body">
+      <h3>0.01秒の脳汁居合斬り</h3>
+      <p>赤く光った瞬間にタップ。0.12秒以内なら相手が真っ二つ。</p>
+    </div>
+    <span class="go">▶ プレイ</span>
+  </a>
+
+  <a class="card" href="../9-weird-tower/">
+    <span class="num">10</span>
+    <div class="emoji">🗼</div>
+    <div class="body">
+      <h3>変なモノ限界タワー</h3>
+      <p>寿司・猫・大仏を物理演算で積み上げろ。崩れる瞬間が最高。</p>
+    </div>
+    <span class="go">▶ プレイ</span>
+  </a>
+
+  <a class="card" href="../10-dont-release/">
+    <span class="num">11</span>
+    <div class="emoji">📱</div>
+    <div class="body">
+      <h3>絶対に指を離してはいけない30秒</h3>
+      <p>偽バッテリー警告・地震・着信に耐えて長押しし続けろ。</p>
+    </div>
+    <span class="go">▶ プレイ</span>
+  </a>
+
+  <footer>
+    <div class="xbox">
+      <div class="xemoji">🐦</div>
+      <h2>新作はXで毎日告知中</h2>
+      <p>「10秒で脳汁が出るゲーム」を日々つくっています。<br>新作・アップデートは <b>@noujiru_game</b> でお知らせ。</p>
+      <a class="xbtn" href="https://x.com/noujiru_game" target="_blank" rel="noopener">
+        <span class="xmark">𝕏</span> <b>@noujiru_game</b> をフォロー
+      </a>
+    </div>
+
+    <div class="ad-slot" aria-label="広告">
+      <div class="lbl">SPONSOR</div>
+      <div class="txt">広告スペース（ページ下部に表示されます）</div>
+    </div>
+
+    <p class="copy">© 2026 脳汁ゲー案内所 ／ <a href="../">LIMIT BREAK 99.9%</a></p>
+  </footer>
+</div>
+
+<script src="../ads.js" defer></script>
+</body>
+</html>
